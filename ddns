@@ -5,94 +5,35 @@ PY3 = '' is u''
 if not PY3:
     reload(__import__('sys')).setdefaultencoding('utf-8')
 
-import sys
 import base64
+import collections
 import email.utils
 import getopt
 import hashlib
+import hmac
 import json
 import logging
 import os
 import re
 import socket
-import hmac
 import sys
-import uuid
+import sys
 import threading
 import time
+import uuid
 
 if PY3:
+    from itertools import zip_longest
+    from queue import Queue
     from urllib.parse import urlencode, quote_plus
     from urllib.request import urlopen, Request, HTTPError
-    from queue import Queue
-    from itertools import zip_longest
 else:
+    from itertools import izip_longest as zip_longest
+    from Queue import Queue
     from urllib import urlencode, quote_plus
     from urllib2 import urlopen, Request, HTTPError
-    from Queue import Queue
-    from itertools import izip_longest as zip_longest
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
-
-def _split(domain):
-    root = '.'.join(domain.rsplit('.', 2)[-2:])
-    record = domain[:-len(root)].strip('.') or '@'
-    return record, root
-
-
-def _getip():
-    urls = [
-        'http://ip.3322.org',
-        'http://whatismyip.akamai.com/',
-        'http://checkip.amazonaws.com/',
-    ]
-    result = Queue()
-    def _fetch(url):
-        result.put(urlopen(Request(url, headers={'user-agent':'curl/7.53'}), timeout=5))
-        logging.info('getip() from %r', url)
-    for url in urls:
-        t = threading.Thread(target=_fetch, args=(url,))
-        t.setDaemon(True)
-        t.start()
-    text = result.get().read().decode()
-    ip = re.search(r'(\d{1,3}.){3}\d{1,3}', text).group()
-    return ip
-
-
-def cloudxns(key, secret, domain):
-    ip = _getip()
-    if ip == socket.gethostbyname(domain):
-        logging.info('remote ip and local ip is same to %s, exit.', ip)
-        return
-    api_url = 'https://www.cloudxns.net/api2/ddns'
-    data = json.dumps({'domain': domain, 'ip': ip, 'line_id': '1'})
-    date = email.utils.formatdate()
-    api_hmac = hashlib.md5(''.join((key, api_url, data, date, secret)).encode()).hexdigest()
-    headers = {'API-KEY': key, 'API-REQUEST-DATE': date, 'API-HMAC': api_hmac, 'API-FORMAT': 'json'}
-    resp = urlopen(Request(api_url, data=data.encode(), headers=headers), timeout=5)
-    logging.info('cloudxns domain=%r to ip=%r result: %s', domain, ip, resp.read())
-
-
-def cloudflare(email, key, domain):
-    ip = _getip()
-    if ip == socket.gethostbyname(domain):
-        logging.info('remote ip and local ip is same to %s, exit.', ip)
-        return
-    headers = {'X-Auth-Email': email, 'X-Auth-Key': key, 'Content-Type': 'application/json'}
-    _, zone_name = _split(domain)
-    api_url = 'https://api.cloudflare.com/client/v4/zones?name=%s' % zone_name
-    resp = urlopen(Request(api_url, headers=headers), timeout=5)
-    zone_id = json.loads(resp.read().decode())['result'][0]['id']
-    api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records?name=%s' % (zone_id, domain)
-    resp = urlopen(Request(api_url, headers=headers), timeout=5)
-    record_id = json.loads(resp.read().decode())['result'][0]['id']
-    api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s' % (zone_id, record_id)
-    data = json.dumps({'id': zone_id, 'type': 'A', 'ttl': 300, 'proxied': False, 'name': domain, 'content': ip})
-    req = Request(api_url, data=data.encode(), headers=headers)
-    req.get_method = lambda: 'PUT'
-    logging.info('cloudflare updating domain=%r to ip=%r', domain, ip)
-    resp = urlopen(req, timeout=5)
-    logging.info('cloudflare domain=%r to ip=%r result: %s', domain, ip, resp.read())
 
 
 def aliyun(key, secret, domain):
@@ -143,6 +84,42 @@ def aliyun(key, secret, domain):
     logging.info('aliyun domain=%r to ip=%r result: %s', domain, ip, result)
 
 
+def cloudflare(email, key, domain):
+    ip = _getip()
+    if ip == socket.gethostbyname(domain):
+        logging.info('remote ip and local ip is same to %s, exit.', ip)
+        return
+    headers = {'X-Auth-Email': email, 'X-Auth-Key': key, 'Content-Type': 'application/json'}
+    _, zone_name = _split(domain)
+    api_url = 'https://api.cloudflare.com/client/v4/zones?name=%s' % zone_name
+    resp = urlopen(Request(api_url, headers=headers), timeout=5)
+    zone_id = json.loads(resp.read().decode())['result'][0]['id']
+    api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records?name=%s' % (zone_id, domain)
+    resp = urlopen(Request(api_url, headers=headers), timeout=5)
+    record_id = json.loads(resp.read().decode())['result'][0]['id']
+    api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s' % (zone_id, record_id)
+    data = json.dumps({'id': zone_id, 'type': 'A', 'ttl': 300, 'proxied': False, 'name': domain, 'content': ip})
+    req = Request(api_url, data=data.encode(), headers=headers)
+    req.get_method = lambda: 'PUT'
+    logging.info('cloudflare updating domain=%r to ip=%r', domain, ip)
+    resp = urlopen(req, timeout=5)
+    logging.info('cloudflare domain=%r to ip=%r result: %s', domain, ip, resp.read())
+
+
+def cloudxns(key, secret, domain):
+    ip = _getip()
+    if ip == socket.gethostbyname(domain):
+        logging.info('remote ip and local ip is same to %s, exit.', ip)
+        return
+    api_url = 'https://www.cloudxns.net/api2/ddns'
+    data = json.dumps({'domain': domain, 'ip': ip, 'line_id': '1'})
+    date = email.utils.formatdate()
+    api_hmac = hashlib.md5(''.join((key, api_url, data, date, secret)).encode()).hexdigest()
+    headers = {'API-KEY': key, 'API-REQUEST-DATE': date, 'API-HMAC': api_hmac, 'API-FORMAT': 'json'}
+    resp = urlopen(Request(api_url, data=data.encode(), headers=headers), timeout=5)
+    logging.info('cloudxns domain=%r to ip=%r result: %s', domain, ip, resp.read())
+
+
 def gandi(key, domain):
     ip = _getip()
     if ip == socket.gethostbyname(domain):
@@ -162,16 +139,41 @@ def gandi(key, domain):
     logging.info('gandi domain=%r to ip=%r result: %s', domain, ip, resp.read())
 
 
-def __main():
+def _getip():
+    urls = [
+        'http://ip.3322.org',
+        'http://whatismyip.akamai.com/',
+        'http://checkip.amazonaws.com/',
+    ]
+    result = Queue()
+    def _fetch(url):
+        result.put(urlopen(Request(url, headers={'user-agent':'curl/7.53'}), timeout=5))
+        logging.info('getip() from %r', url)
+    for url in urls:
+        t = threading.Thread(target=_fetch, args=(url,))
+        t.setDaemon(True)
+        t.start()
+    text = result.get().read().decode()
+    ip = re.search(r'(\d{1,3}.){3}\d{1,3}', text).group()
+    return ip
+
+
+def _split(domain):
+    root = '.'.join(domain.rsplit('.', 2)[-2:])
+    record = domain[:-len(root)].strip('.') or '@'
+    return record, root
+
+
+def _main():
     applet = os.path.basename(sys.argv[0])
-    funcs = [v for v in globals().values() if type(v) is type(__main) and v.__module__ == '__main__' and not v.__name__.startswith('_')]
+    funcs = [v for v in globals().values() if type(v) is type(_main) and v.__module__ == '__main__' and not v.__name__.startswith('_')]
     if not PY3:
         for func in funcs:
             setattr(func, '__doc__', getattr(func, 'func_doc'))
             setattr(func, '__defaults__', getattr(func, 'func_defaults'))
             setattr(func, '__code__', getattr(func, 'func_code'))
     funcs = sorted(funcs, key=lambda x:x.__name__)
-    params = dict((f.__name__, list(zip_longest(f.__code__.co_varnames[:f.__code__.co_argcount][::-1], (f.__defaults__ or [])[::-1]))[::-1]) for f in funcs)
+    params = collections.OrderedDict((f.__name__, list(zip_longest(f.__code__.co_varnames[:f.__code__.co_argcount][::-1], (f.__defaults__ or [])[::-1]))[::-1]) for f in funcs)
     def usage(applet):
         if applet in ('ddns', 'ddns.py'):
             print('Usage: {0} <provider> [arguments]\n\nExamples:\n{1}\n'.format(applet, '\n'.join('\t{0} {1} {2}'.format(applet, k, ' '.join('--{0} {1}'.format(x.replace('_', '-'), x.upper() if y is None else repr(y)) for (x, y) in v)) for k, v in params.items())))
@@ -204,5 +206,5 @@ def __main():
 
 
 if __name__ == '__main__':
-    __main()
+    _main()
 
