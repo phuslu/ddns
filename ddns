@@ -105,7 +105,7 @@ def aliyun(key, secret, domain):
     if ip == socket.gethostbyname(domain):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
-    sha1_hmac = lambda s: base64.b64encode(hmac.new(secret+'&', s, hashlib.sha1).digest())
+    sign = lambda p: base64.b64encode(hmac.new(secret+'&', 'GET&%2F&'+quote_plus(urlencode(sorted(p))), hashlib.sha1).digest())
     api_url = 'https://alidns.aliyuncs.com/?'
     rr, root_domain = domain.split('.', 1)
     params = [
@@ -119,8 +119,7 @@ def aliyun(key, secret, domain):
         ('Action', 'DescribeDomainRecords'),
         ('DomainName', root_domain),
     ]
-    signature = sha1_hmac('GET&%2F&' + quote_plus(urlencode(sorted(params))))
-    params += [('Signature', signature)]
+    params += [('Signature', sign(params))]
     resp = urlopen(Request(api_url + urlencode(sorted(params))), timeout=5)
     info = json.loads(resp.read())
     record_id = next(x['RecordId'] for x in info['DomainRecords']['Record'] if x['RR'] == rr)
@@ -139,10 +138,8 @@ def aliyun(key, secret, domain):
         ('Type', 'A'),
         ('Value', ip),
         ('TTL', 600),
-        ('Line', 'default'),
     ]
-    signature = sha1_hmac('GET&%2F&' + quote_plus(urlencode(sorted(params))))
-    params += [('Signature', signature)]
+    params += [('Signature', sign(params))]
     try:
         result = urlopen(Request(api_url + urlencode(sorted(params))), timeout=5).read()
     except HTTPError as e:
