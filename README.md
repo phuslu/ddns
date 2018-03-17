@@ -1,4 +1,4 @@
-# Usage
+# ddns
 ```
 Usage: ddns <provider> [arguments]
 
