@@ -43,7 +43,7 @@ def aliyun(key, secret, domain):
         return
     rfc3339 = lambda: time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
     sign = lambda p: base64.b64encode(hmac.new((secret+'&').encode(), ('GET&%2F&'+quote_plus(urlencode(sorted(p)))).encode(), hashlib.sha1).digest())
-    api_url = 'https://alidns.aliyuncs.com/?'
+    api_url = 'https://alidns.aliyuncs.com/'
     rr, root_domain = _split(domain)
     params = [
         ('Format', 'json'),
@@ -57,8 +57,7 @@ def aliyun(key, secret, domain):
         ('DomainName', root_domain),
     ]
     params += [('Signature', sign(params))]
-    resp = urlopen(Request(api_url + urlencode(sorted(params))), timeout=5)
-    info = json.loads(resp.read())
+    _, _, info = _request('GET', api_url, params=params, return_json=True)
     record_id = next(x['RecordId'] for x in info['DomainRecords']['Record'] if x['RR'] == rr)
     logging.info('aliyun domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     params = [
@@ -77,11 +76,8 @@ def aliyun(key, secret, domain):
         ('TTL', 600),
     ]
     params += [('Signature', sign(params))]
-    try:
-        result = urlopen(Request(api_url + urlencode(sorted(params))), timeout=5).read()
-    except HTTPError as e:
-        result = e.read()
-    logging.info('aliyun domain=%r to ip=%r result: %s', domain, ip, result)
+    _, _, info = _request('GET', api_url, params=params, return_json=True)
+    logging.info('aliyun domain=%r to ip=%r info: %s', domain, ip, info)
 
 
 def cloudflare(email, key, domain):
@@ -92,18 +88,17 @@ def cloudflare(email, key, domain):
     headers = {'X-Auth-Email': email, 'X-Auth-Key': key, 'Content-Type': 'application/json'}
     _, zone_name = _split(domain)
     api_url = 'https://api.cloudflare.com/client/v4/zones?name=%s' % zone_name
-    resp = urlopen(Request(api_url, headers=headers), timeout=5)
-    zone_id = json.loads(resp.read().decode())['result'][0]['id']
+    code, _, info = _request('GET', api_url, headers=headers, return_json=True)
+    zone_id = info['result'][0]['id']
+    logging.info('cloudflare domain=%r to ip=%r zone_id: %s', domain, ip, zone_id)
     api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records?name=%s' % (zone_id, domain)
-    resp = urlopen(Request(api_url, headers=headers), timeout=5)
-    record_id = json.loads(resp.read().decode())['result'][0]['id']
+    _, _, info = _request('GET', api_url, headers=headers, return_json=True)
+    record_id = info['result'][0]['id']
+    logging.info('cloudflare domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s' % (zone_id, record_id)
-    data = json.dumps({'id': zone_id, 'type': 'A', 'ttl': 300, 'proxied': False, 'name': domain, 'content': ip})
-    req = Request(api_url, data=data.encode(), headers=headers)
-    req.get_method = lambda: 'PUT'
-    logging.info('cloudflare updating domain=%r to ip=%r', domain, ip)
-    resp = urlopen(req, timeout=5)
-    logging.info('cloudflare domain=%r to ip=%r result: %s', domain, ip, resp.read())
+    info = {'id': zone_id, 'type': 'A', 'ttl': 300, 'proxied': False, 'name': domain, 'content': ip}
+    _, _, info = _request('PUT', api_url, headers=headers, json=info, return_json=True)
+    logging.info('cloudflare domain=%r to ip=%r result: %s', domain, ip, info['result'])
 
 
 def cloudxns(key, secret, domain):
@@ -127,13 +122,11 @@ def dnspod(email, password, domain):
         return
     record_name, domain = _split(domain)
     params = {'login_email': email, 'login_password': password, 'format': 'json'}
-    resp = urlopen(Request('https://dnsapi.cn/Domain.List', data=urlencode(params).encode()), timeout=5)
-    info = json.loads(resp.read())
+    _, _, info = _request('POST', 'https://dnsapi.cn/Domain.List', params=params, return_json=True)
     domain_id = next(x['id'] for x in info['domains'] if x['punycode'] == domain)
     logging.info('dnspod domain=%r to ip=%r domain_id: %s', domain, ip, domain_id)
     params['domain_id'] = domain_id
-    resp = urlopen(Request('https://dnsapi.cn/Record.List', data=urlencode(params).encode()), timeout=5)
-    info = json.loads(resp.read())
+    _, _, info = _request('POST', 'https://dnsapi.cn/Record.List', params=params, return_json=True)
     record_id = next(x['id'] for x in info['records'] if x['name'] == record_name and x['type'] == 'A')
     logging.info('dnspod domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     params.update({
@@ -144,8 +137,7 @@ def dnspod(email, password, domain):
         'mx': 5,
         'sub_domain': record_name,
     })
-    resp = urlopen(Request('https://dnsapi.cn/Record.Modify', data=urlencode(params).encode()), timeout=5)
-    info = json.loads(resp.read())
+    _, _, info = _request('POST', 'https://dnsapi.cn/Record.Modify', params=params, return_json=True)
     logging.info('dnspod domain=%r to ip=%r info: %s', domain, ip, info)
 
 
@@ -157,15 +149,12 @@ def gandi(key, domain):
     headers = {'X-Api-Key': key, 'Content-Type': 'application/json'}
     record_name, zone_name = _split(domain)
     api_url = 'https://dns.api.gandi.net/api/v5/zones'
-    resp = urlopen(Request(api_url, headers=headers), timeout=5)
-    zone_id = next(x['uuid'] for x in json.loads(resp.read().decode()) if x['name'] == zone_name)
+    _, _, info = _request('GET', api_url, headers=headers, return_json=True)
+    zone_id = next(x['uuid'] for x in info if x['name'] == zone_name)
+    logging.info('gandi domain=%r to ip=%r zone_id: %s', domain, ip, zone_id)
     api_url = 'https://dns.api.gandi.net/api/v5/zones/%s/records/%s/A' % (zone_id, record_name)
-    data = json.dumps({'rrset_ttl': 300, 'rrset_values': [ip]})
-    req = Request(api_url, data=data.encode(), headers=headers)
-    req.get_method = lambda: 'PUT'
-    logging.info('gandi updating domain=%r to ip=%r', domain, ip)
-    resp = urlopen(req, timeout=5)
-    logging.info('gandi domain=%r to ip=%r result: %s', domain, ip, resp.read())
+    _, _, info = _request('PUT', api_url, json={'rrset_ttl': 300, 'rrset_values': [ip]}, headers=headers)
+    logging.info('gandi domain=%r to ip=%r info: %s', domain, ip, info)
 
 
 def he(key, domain):
@@ -174,8 +163,8 @@ def he(key, domain):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
     params = {'hostname': domain, 'password': key, 'myip': ip}
-    resp = urlopen(Request('https://dyn.dns.he.net/nic/update', data=urlencode(params).encode()), timeout=5)
-    logging.info('dnspod domain=%r to ip=%r result: %s', domain, ip, resp.read())
+    _, _, content = _request('GET', 'https://dyn.dns.he.net/nic/update', params=params)
+    logging.info('dnspod domain=%r to ip=%r result: %s', domain, ip, content)
 
 
 def _getip():
@@ -195,6 +184,42 @@ def _getip():
     text = result.get().read().decode()
     ip = re.search(r'(\d{1,3}.){3}\d{1,3}', text).group()
     return ip
+
+
+def _request(method, url, params=None, json=None, data=None, headers=None, timeout=None, return_json=False):
+    jsonlib = __import__('json')
+    if headers is None:
+        headers = {}
+    if 'User-Agent' not in headers:
+        headers.update({'User-Agent': 'curl/7.53'})
+    if params:
+        if isinstance(params, dict):
+            params = sorted(params.items())
+        else:
+            params = sorted(params)
+        if method == 'GET':
+            url += '?' + urlencode(params)
+        else:
+            data = urlencode(params).encode()
+    if json:
+        assert method != 'GET'
+        data = jsonlib.dumps(json).encode()
+        headers.update({'Content-Type': 'application/json'})
+    if type(data) is type(u''):
+        data = data.encode()
+    if timeout is None:
+        timeout = 8
+    req = Request(url, data=data, headers=headers)
+    req.get_method = lambda: method
+    try:
+        resp = urlopen(req, timeout=timeout)
+    except HTTPError as e:
+        resp = e
+    content = resp.read()
+    if return_json and resp.code == 200:
+        content = jsonlib.loads(content)
+    return resp.code, dict(resp.headers), content
+
 
 
 def _split(domain):
