@@ -53,7 +53,7 @@ def _getip():
     return ip
 
 
-def cloudxns(api_key, api_secret, domain):
+def cloudxns(key, secret, domain):
     ip = _getip()
     if ip == socket.gethostbyname(domain):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
@@ -61,18 +61,18 @@ def cloudxns(api_key, api_secret, domain):
     api_url = 'https://www.cloudxns.net/api2/ddns'
     data = json.dumps({'domain': domain, 'ip': ip, 'line_id': '1'})
     date = email.utils.formatdate()
-    api_hmac = hashlib.md5(''.join((api_key, api_url, data, date, api_secret)).encode()).hexdigest()
-    headers = {'API-KEY': api_key, 'API-REQUEST-DATE': date, 'API-HMAC': api_hmac, 'API-FORMAT': 'json'}
+    api_hmac = hashlib.md5(''.join((key, api_url, data, date, secret)).encode()).hexdigest()
+    headers = {'API-KEY': key, 'API-REQUEST-DATE': date, 'API-HMAC': api_hmac, 'API-FORMAT': 'json'}
     resp = urlopen(Request(api_url, data=data.encode(), headers=headers), timeout=5)
     logging.info('ddns_cx domain=%r to ip=%r result: %s', domain, ip, resp.read())
 
 
-def cloudflare(auth_email, auth_key, zone, record_name):
+def cloudflare(email, key, zone, record_name):
     ip = _getip()
     if ip == socket.gethostbyname(record_name):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
-    headers = {'X-Auth-Email': auth_email, 'X-Auth-Key': auth_key, 'Content-Type': 'application/json'}
+    headers = {'X-Auth-Email': email, 'X-Auth-Key': key, 'Content-Type': 'application/json'}
     if '.' not in zone:
         zone_name = zone
         zone_id = zone
@@ -96,12 +96,12 @@ def cloudflare(auth_email, auth_key, zone, record_name):
     logging.info('ddns_cf record_name=%r to ip=%r result: %s', record_name, ip, resp.read())
 
 
-def gandi(api_key, zone, record_name):
+def gandi(key, zone, record_name):
     ip = _getip()
     if ip == socket.gethostbyname(record_name):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
-    headers = {'X-Api-Key': api_key, 'Content-Type': 'application/json'}
+    headers = {'X-Api-Key': key, 'Content-Type': 'application/json'}
     if '.' not in zone:
         zone_name = zone
         zone_id = zone
