@@ -7,7 +7,6 @@ if not PY3:
 
 import base64
 import collections
-import email.utils
 import getopt
 import hashlib
 import hmac
@@ -108,7 +107,7 @@ def cloudxns(key, secret, domain):
         return
     api_url = 'https://www.cloudxns.net/api2/ddns'
     data = json.dumps({'domain': domain, 'ip': ip, 'line_id': '1'})
-    date = email.utils.formatdate()
+    date = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
     api_hmac = hashlib.md5(''.join((key, api_url, data, date, secret)).encode()).hexdigest()
     headers = {'API-KEY': key, 'API-REQUEST-DATE': date, 'API-HMAC': api_hmac, 'API-FORMAT': 'json'}
     resp = urlopen(Request(api_url, data=data.encode(), headers=headers), timeout=5)
@@ -219,7 +218,6 @@ def _request(method, url, params=None, json=None, data=None, headers=None, timeo
     if return_json and resp.code == 200:
         content = jsonlib.loads(content)
     return resp.code, dict(resp.headers), content
-
 
 
 def _split(domain):
