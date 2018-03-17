@@ -54,10 +54,9 @@ def _getip():
 
 
 def cloudxns(api_key, api_secret, domain):
-    lip = socket.gethostbyname(domain)
-    rip = _getip()
-    if lip == rip:
-        logging.info('remote ip and local ip is same to %s, exit.', lip)
+    ip = _getip()
+    if ip == socket.gethostbyname(domain):
+        logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
     api_url = 'https://www.cloudxns.net/api2/ddns'
     data = json.dumps({'domain': domain, 'ip': ip, 'line_id': '1'})
@@ -69,10 +68,9 @@ def cloudxns(api_key, api_secret, domain):
 
 
 def cloudflare(auth_email, auth_key, zone, record_name):
-    lip = socket.gethostbyname(record_name)
     ip = _getip()
-    if lip == ip:
-        logging.info('remote ip and local ip is same to %s, exit.', lip)
+    if ip == socket.gethostbyname(record_name):
+        logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
     headers = {'X-Auth-Email': auth_email, 'X-Auth-Key': auth_key, 'Content-Type': 'application/json'}
     if '.' not in zone:
@@ -99,10 +97,9 @@ def cloudflare(auth_email, auth_key, zone, record_name):
 
 
 def gandi(api_key, zone, record_name):
-    lip = socket.gethostbyname(record_name)
     ip = _getip()
-    if lip == ip:
-        logging.info('remote ip and local ip is same to %s, exit.', lip)
+    if ip == socket.gethostbyname(record_name):
+        logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
     headers = {'X-Api-Key': api_key, 'Content-Type': 'application/json'}
     if '.' not in zone:
