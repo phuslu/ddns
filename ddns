@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # coding:utf-8
 
-import sys
-
-PY3 = sys.version >= '3'
+PY3 = '' is u''
 if not PY3:
-    reload(sys).setdefaultencoding('utf-8')
+    reload(__import__('sys')).setdefaultencoding('utf-8')
 
+import sys
 import base64
 import email.utils
 import getopt
