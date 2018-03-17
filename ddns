@@ -127,12 +127,12 @@ def dnspod(email, password, domain):
         return
     record_name, domain = _split(domain)
     params = {'login_email': email, 'login_password': password, 'format': 'json'}
-    resp = urlopen(Request('https://dnsapi.cn/Domain.List', data=urlencode(params)), timeout=5)
+    resp = urlopen(Request('https://dnsapi.cn/Domain.List', data=urlencode(params).encode()), timeout=5)
     info = json.loads(resp.read())
     domain_id = next(x['id'] for x in info['domains'] if x['punycode'] == domain)
     logging.info('dnspod domain=%r to ip=%r domain_id: %s', domain, ip, domain_id)
     params['domain_id'] = domain_id
-    resp = urlopen(Request('https://dnsapi.cn/Record.List', data=urlencode(params)), timeout=5)
+    resp = urlopen(Request('https://dnsapi.cn/Record.List', data=urlencode(params).encode()), timeout=5)
     info = json.loads(resp.read())
     record_id = next(x['id'] for x in info['records'] if x['name'] == record_name and x['type'] == 'A')
     logging.info('dnspod domain=%r to ip=%r record_id: %s', domain, ip, record_id)
@@ -144,7 +144,7 @@ def dnspod(email, password, domain):
         'mx': 5,
         'sub_domain': record_name,
     })
-    resp = urlopen(Request('https://dnsapi.cn/Record.Modify', data=urlencode(params)), timeout=5)
+    resp = urlopen(Request('https://dnsapi.cn/Record.Modify', data=urlencode(params).encode()), timeout=5)
     info = json.loads(resp.read())
     logging.info('dnspod domain=%r to ip=%r info: %s', domain, ip, info)
 
