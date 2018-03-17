@@ -12,21 +12,19 @@ import email.utils
 import getopt
 import hashlib
 import json
-import httplib
 import logging
 import os
 import re
 import socket
-import struct
 import hmac
 import sys
 import uuid
-import telnetlib
 import threading
 import time
 
 if PY3:
-    from urllib.request import urlopen, urlencode, quote_plus, Request, HTTPError
+    from urllib.parse import urlencode, quote_plus
+    from urllib.request import urlopen, Request, HTTPError
     from queue import Queue
     from itertools import zip_longest
 else:
@@ -105,7 +103,7 @@ def aliyun(key, secret, domain):
     if ip == socket.gethostbyname(domain):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
-    sign = lambda p: base64.b64encode(hmac.new(secret+'&', 'GET&%2F&'+quote_plus(urlencode(sorted(p))), hashlib.sha1).digest())
+    sign = lambda p: base64.b64encode(hmac.new((secret+'&').encode(), ('GET&%2F&'+quote_plus(urlencode(sorted(p)))).encode(), hashlib.sha1).digest())
     api_url = 'https://alidns.aliyuncs.com/?'
     rr, root_domain = domain.split('.', 1)
     params = [
