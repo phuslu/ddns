@@ -3,8 +3,8 @@
 Usage: ddns <provider> [arguments]
 
 Examples:
-        ddns gandi --key KEY --zone ZONE --record-name RECORD_NAME
-        ddns cloudflare --email EMAIL --key KEY --zone ZONE --record-name RECORD_NAME
+        ddns gandi --key KEY --domain DOMAIN
+        ddns cloudflare --email EMAIL --key KEY --domain DOMAIN
         ddns cloudxns --key KEY --secret SECRET --domain DOMAIN
         ddns aliyun --key KEY --secret SECRET --domain DOMAIN
 ```
