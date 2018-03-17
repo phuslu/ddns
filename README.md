@@ -8,3 +8,8 @@ Examples:
         ddns cloudxns --key KEY --secret SECRET --domain DOMAIN
         ddns aliyun --key KEY --secret SECRET --domain DOMAIN
 ```
+### Roadmap
+- [ ] dnspod
+- [ ] route53
+- [ ] he.net
+- [ ] and [more...](https://github.com/Neilpang/acme.sh/tree/master/dnsapi)
