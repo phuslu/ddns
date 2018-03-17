@@ -143,7 +143,7 @@ def aliyun(key, secret, domain):
     logging.info('aliyun domain=%r to ip=%r result: %s', domain, ip, result)
 
 
-def gandi(key, zone, domain):
+def gandi(key, domain):
     ip = _getip()
     if ip == socket.gethostbyname(domain):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
