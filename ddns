@@ -168,6 +168,16 @@ def gandi(key, domain):
     logging.info('gandi domain=%r to ip=%r result: %s', domain, ip, resp.read())
 
 
+def he(key, domain):
+    ip = _getip()
+    if ip == socket.gethostbyname(domain):
+        logging.info('remote ip and local ip is same to %s, exit.', ip)
+        return
+    params = {'hostname': domain, 'password': key, 'myip': ip}
+    resp = urlopen(Request('https://dyn.dns.he.net/nic/update', data=urlencode(params).encode()), timeout=5)
+    logging.info('dnspod domain=%r to ip=%r result: %s', domain, ip, resp.read())
+
+
 def _getip():
     urls = [
         'http://ip.3322.org',
