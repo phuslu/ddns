@@ -34,6 +34,11 @@ else:
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
+def _split(domain):
+    root = '.'.join(domain.rsplit('.', 2)[-2:])
+    record = domain[:-len(root)].strip('.') or '@'
+    return record, root
+
 
 def _getip():
     urls = [
@@ -68,33 +73,26 @@ def cloudxns(key, secret, domain):
     logging.info('cloudxns domain=%r to ip=%r result: %s', domain, ip, resp.read())
 
 
-def cloudflare(email, key, zone, record_name):
+def cloudflare(email, key, domain):
     ip = _getip()
-    if ip == socket.gethostbyname(record_name):
+    if ip == socket.gethostbyname(domain):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
     headers = {'X-Auth-Email': email, 'X-Auth-Key': key, 'Content-Type': 'application/json'}
-    if '.' not in zone:
-        zone_name = zone
-        zone_id = zone
-    else:
-        zone_name = zone
-        api_url = 'https://api.cloudflare.com/client/v4/zones?name=%s' % zone_name
-        resp = urlopen(Request(api_url, headers=headers), timeout=5)
-        zone_id = json.loads(resp.read().decode())['result'][0]['id']
-    if '.' not in record_name:
-        record_id = record_name
-    else:
-        api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records?name=%s' % (zone_id, record_name)
-        resp = urlopen(Request(api_url, headers=headers), timeout=5)
-        record_id = json.loads(resp.read().decode())['result'][0]['id']
+    _, zone_name = _split(domain)
+    api_url = 'https://api.cloudflare.com/client/v4/zones?name=%s' % zone_name
+    resp = urlopen(Request(api_url, headers=headers), timeout=5)
+    zone_id = json.loads(resp.read().decode())['result'][0]['id']
+    api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records?name=%s' % (zone_id, domain)
+    resp = urlopen(Request(api_url, headers=headers), timeout=5)
+    record_id = json.loads(resp.read().decode())['result'][0]['id']
     api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s' % (zone_id, record_id)
-    data = json.dumps({'id': zone_id, 'type': 'A', 'ttl': 300, 'proxied': False, 'name': record_name, 'content': ip})
+    data = json.dumps({'id': zone_id, 'type': 'A', 'ttl': 300, 'proxied': False, 'name': domain, 'content': ip})
     req = Request(api_url, data=data.encode(), headers=headers)
     req.get_method = lambda: 'PUT'
-    logging.info('cloudflare updating record_name=%r to ip=%r', record_name, ip)
+    logging.info('cloudflare updating domain=%r to ip=%r', domain, ip)
     resp = urlopen(req, timeout=5)
-    logging.info('cloudflare record_name=%r to ip=%r result: %s', record_name, ip, resp.read())
+    logging.info('cloudflare domain=%r to ip=%r result: %s', domain, ip, resp.read())
 
 
 def aliyun(key, secret, domain):
@@ -102,14 +100,15 @@ def aliyun(key, secret, domain):
     if ip == socket.gethostbyname(domain):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
+    rfc3339 = lambda: time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
     sign = lambda p: base64.b64encode(hmac.new((secret+'&').encode(), ('GET&%2F&'+quote_plus(urlencode(sorted(p)))).encode(), hashlib.sha1).digest())
     api_url = 'https://alidns.aliyuncs.com/?'
-    rr, root_domain = domain.split('.', 1)
+    rr, root_domain = _split(domain)
     params = [
         ('Format', 'json'),
         ('Version', '2015-01-09'),
         ('AccessKeyId', key),
-        ('Timestamp', time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())),
+        ('Timestamp', rfc3339()),
         ('SignatureMethod', 'HMAC-SHA1'),
         ('SignatureNonce', uuid.uuid4()),
         ('SignatureVersion', '1.0'),
@@ -125,7 +124,7 @@ def aliyun(key, secret, domain):
         ('Format', 'json'),
         ('Version', '2015-01-09'),
         ('AccessKeyId', key),
-        ('Timestamp', time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())),
+        ('Timestamp', rfc3339()),
         ('SignatureMethod', 'HMAC-SHA1'),
         ('SignatureNonce', uuid.uuid4()),
         ('SignatureVersion', '1.0'),
@@ -144,31 +143,23 @@ def aliyun(key, secret, domain):
     logging.info('aliyun domain=%r to ip=%r result: %s', domain, ip, result)
 
 
-def gandi(key, zone, record_name):
+def gandi(key, zone, domain):
     ip = _getip()
-    if ip == socket.gethostbyname(record_name):
+    if ip == socket.gethostbyname(domain):
         logging.info('remote ip and local ip is same to %s, exit.', ip)
         return
     headers = {'X-Api-Key': key, 'Content-Type': 'application/json'}
-    if '.' not in zone:
-        zone_name = zone
-        zone_id = zone
-    else:
-        zone_name = zone
-        api_url = 'https://dns.api.gandi.net/api/v5/zones'
-        resp = urlopen(Request(api_url, headers=headers), timeout=5)
-        zone_id = next(x['uuid'] for x in json.loads(resp.read().decode()) if x['name'] == zone_name)
-    if record_name.endswith(zone_name):
-        record_name = record_name[:-len(zone_name)].strip('.')
-    if record_name == '':
-        record_name = '@'
+    record_name, zone_name = _split(domain)
+    api_url = 'https://dns.api.gandi.net/api/v5/zones'
+    resp = urlopen(Request(api_url, headers=headers), timeout=5)
+    zone_id = next(x['uuid'] for x in json.loads(resp.read().decode()) if x['name'] == zone_name)
     api_url = 'https://dns.api.gandi.net/api/v5/zones/%s/records/%s/A' % (zone_id, record_name)
     data = json.dumps({'rrset_ttl': 300, 'rrset_values': [ip]})
     req = Request(api_url, data=data.encode(), headers=headers)
     req.get_method = lambda: 'PUT'
-    logging.info('gandi updating record_name=%r to ip=%r', record_name, ip)
+    logging.info('gandi updating domain=%r to ip=%r', domain, ip)
     resp = urlopen(req, timeout=5)
-    logging.info('gandi record_name=%r to ip=%r result: %s', record_name, ip, resp.read())
+    logging.info('gandi domain=%r to ip=%r result: %s', domain, ip, resp.read())
 
 
 def __main():
