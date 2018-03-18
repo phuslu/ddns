@@ -37,10 +37,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 
 def aliyun(key, secret, domain):
-    ip = _getip()
-    if ip == socket.gethostbyname(domain):
-        logging.info('remote ip and local ip is same to %s, exit.', ip)
-        return
+    ip = _getip(domain)
     rfc3339 = lambda: time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
     sign = lambda p: base64.b64encode(hmac.new((secret+'&').encode(), ('GET&%2F&'+quote_plus(urlencode(sorted(p)))).encode(), hashlib.sha1).digest())
     api_url = 'https://alidns.aliyuncs.com/'
@@ -81,10 +78,7 @@ def aliyun(key, secret, domain):
 
 
 def cloudflare(email, key, domain):
-    ip = _getip()
-    if ip == socket.gethostbyname(domain):
-        logging.info('remote ip and local ip is same to %s, exit.', ip)
-        return
+    ip = _getip(domain)
     headers = {'X-Auth-Email': email, 'X-Auth-Key': key, 'Content-Type': 'application/json'}
     _, zone_name = _split(domain)
     api_url = 'https://api.cloudflare.com/client/v4/zones?name=%s' % zone_name
@@ -102,10 +96,7 @@ def cloudflare(email, key, domain):
 
 
 def cloudxns(key, secret, domain):
-    ip = _getip()
-    if ip == socket.gethostbyname(domain):
-        logging.info('remote ip and local ip is same to %s, exit.', ip)
-        return
+    ip = _getip(domain)
     api_url = 'https://www.cloudxns.net/api2/ddns'
     data = json.dumps({'domain': domain, 'ip': ip, 'line_id': '1'})
     date = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
@@ -116,10 +107,7 @@ def cloudxns(key, secret, domain):
 
 
 def dnspod(email, password, domain):
-    ip = _getip()
-    if ip == socket.gethostbyname(domain):
-        logging.info('remote ip and local ip is same to %s, exit.', ip)
-        return
+    ip = _getip(domain)
     record_name, domain = _split(domain)
     params = {'login_email': email, 'login_password': password, 'format': 'json'}
     _, _, info = _request('POST', 'https://dnsapi.cn/Domain.List', params=params, return_json=True)
@@ -142,10 +130,7 @@ def dnspod(email, password, domain):
 
 
 def gandi(key, domain):
-    ip = _getip()
-    if ip == socket.gethostbyname(domain):
-        logging.info('remote ip and local ip is same to %s, exit.', ip)
-        return
+    ip = _getip(domain)
     headers = {'X-Api-Key': key, 'Content-Type': 'application/json'}
     record_name, zone_name = _split(domain)
     api_url = 'https://dns.api.gandi.net/api/v5/zones'
@@ -158,20 +143,14 @@ def gandi(key, domain):
 
 
 def he(key, domain):
-    ip = _getip()
-    if ip == socket.gethostbyname(domain):
-        logging.info('remote ip and local ip is same to %s, exit.', ip)
-        return
+    ip = _getip(domain)
     params = {'hostname': domain, 'password': key, 'myip': ip}
     _, _, content = _request('GET', 'https://dyn.dns.he.net/nic/update', params=params)
     logging.info('dnspod domain=%r to ip=%r result: %s', domain, ip, content)
 
 
 def qcloud(secret_id, secret_key, domain):
-    ip = _getip()
-    if ip == socket.gethostbyname(domain):
-        logging.info('remote ip and local ip is same to %s, exit.', ip)
-        return
+    ip = _getip(domain)
     sign = lambda p: base64.b64encode(hmac.new(secret_key.encode(), ('GETcns.api.qcloud.com/v2/index.php?'+urlencode(sorted(p))).encode(), hashlib.sha1).digest())
     api_url = 'https://cns.api.qcloud.com/v2/index.php'
     record_name, root_domain = _split(domain)
@@ -209,7 +188,7 @@ def qcloud(secret_id, secret_key, domain):
     logging.info('aliyun domain=%r to ip=%r info: %s', domain, ip, info)
 
 
-def _getip():
+def _getip(domain):
     urls = [
         'http://ip.3322.org',
         'http://whatismyip.akamai.com/',
@@ -225,6 +204,9 @@ def _getip():
         t.start()
     text = result.get().read().decode()
     ip = re.search(r'(\d{1,3}.){3}\d{1,3}', text).group()
+    if ip == socket.gethostbyname(domain):
+        logging.info('remote ip and local ip is same to %s, exit.', ip)
+        sys.exit(0)
     return ip
 
 
