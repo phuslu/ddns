@@ -33,6 +33,11 @@ else:
     from urllib import urlencode, quote_plus
     from urllib2 import urlopen, Request, HTTPError
 
+try:
+    import publicsuffix
+except ImportError:
+    publicsuffix = None
+
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 
@@ -284,7 +289,10 @@ def _request(method, url, params=None, json=None, data=None, headers=None, timeo
 
 
 def _split(domain):
-    root = '.'.join(domain.rsplit('.', 2)[-2:])
+    if publicsuffix:
+        root = publicsuffix.PublicSuffixList().get_public_suffix(domain)
+    else:
+        root = '.'.join(domain.rsplit('.', 2)[-2:])
     record = domain[:-len(root)].strip('.') or '@'
     return record, root
 
