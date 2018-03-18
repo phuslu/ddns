@@ -9,6 +9,7 @@ Examples:
         ddns dnspod --email EMAIL --password PASSWORD --domain DOMAIN
         ddns gandi --key KEY --domain DOMAIN
         ddns he --key KEY --domain DOMAIN
+        ddns qcloud --secret-id SECRET_ID --secret-key SECRET_KEY --domain DOMAIN
 ```
 ### Roadmap
 - [ ] godaddy
