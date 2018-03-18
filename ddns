@@ -218,6 +218,14 @@ def ns1(key, domain):
     logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
 
 
+def namecheap(password, domain):
+    record_name, root_domain = _split(domain)
+    url = 'https://dynamicdns.park-your-domain.com/update'
+    params = {'host': record_name, 'domain': root_domain, 'password': password}
+    _, _, info = _request('GET', url, params=params)
+    logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
+
+
 def qcloud(secret_id, secret_key, domain):
     ip = _getip(domain)
     sign = lambda p: base64.b64encode(hmac.new(secret_key.encode(), ('GETcns.api.qcloud.com/v2/index.php?'+urlencode(sorted(p))).encode(), hashlib.sha1).digest())
