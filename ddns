@@ -106,6 +106,20 @@ def cloudxns(key, secret, domain):
     logging.info('cloudxns domain=%r to ip=%r result: %s', domain, ip, resp.read())
 
 
+def digitalocean(key, domain):
+    ip = _getip(domain)
+    headers = {'Authorization': 'Bearer '+key}
+    record_name, root_domain = _split(domain)
+    url = 'https://api.digitalocean.com/v2/domains/%s/records' % root_domain
+    _, _, info = _request('GET', url, headers=headers, return_json=True)
+    record_id = next(x['id'] for x in info['domain_records'] if x['name'] == record_name and x['type'] == 'A')
+    logging.info('linode domain=%r to ip=%r record_id: %s', domain, ip, record_id)
+    url = 'https://api.digitalocean.com/v2/domains/%s/records/%s' % (root_domain, record_id)
+    info = {'type': 'A', 'name': record_name, 'data': ip, 'ttl': '600'}
+    _, _, info = _request('PUT', url, headers=headers, json=info, return_json=True)
+    logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
+
+
 def dnspod(email, password, domain):
     ip = _getip(domain)
     record_name, domain = _split(domain)
