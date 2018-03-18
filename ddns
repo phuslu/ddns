@@ -1,5 +1,23 @@
 #!/usr/bin/env python
 # coding:utf-8
+"""
+Usage: ddns.py <provider> [arguments]
+
+Examples:
+    ddns.py aliyun --key KEY --secret SECRET --domain DOMAIN
+    ddns.py cloudflare --email EMAIL --key KEY --domain DOMAIN
+    ddns.py cloudxns --key KEY --secret SECRET --domain DOMAIN
+    ddns.py digitalocean --key KEY --domain DOMAIN
+    ddns.py dnsimple --account-id ACCOUNT_ID --key KEY --domain DOMAIN
+    ddns.py dnspod --email EMAIL --password PASSWORD --domain DOMAIN
+    ddns.py gandi --key KEY --domain DOMAIN
+    ddns.py godaddy --key KEY --secret SECRET --domain DOMAIN
+    ddns.py he --key KEY --domain DOMAIN
+    ddns.py linode --key KEY --domain DOMAIN
+    ddns.py namecheap --password PASSWORD --domain DOMAIN
+    ddns.py ns1 --key KEY --domain DOMAIN
+    ddns.py qcloud --secret-id SECRET_ID --secret-key SECRET_KEY --domain DOMAIN
+"""
 
 PY3 = '' is u''
 if not PY3:
