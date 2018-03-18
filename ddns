@@ -44,7 +44,7 @@ def aliyun(key, secret, domain):
     rfc3339 = lambda: time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
     sign = lambda p: base64.b64encode(hmac.new((secret+'&').encode(), ('GET&%2F&'+quote_plus(urlencode(sorted(p)))).encode(), hashlib.sha1).digest())
     api_url = 'https://alidns.aliyuncs.com/'
-    rr, root_domain = _split(domain)
+    record_name, root_domain = _split(domain)
     params = [
         ('Format', 'json'),
         ('Version', '2015-01-09'),
@@ -58,7 +58,7 @@ def aliyun(key, secret, domain):
     ]
     params += [('Signature', sign(params))]
     _, _, info = _request('GET', api_url, params=params, return_json=True)
-    record_id = next(x['RecordId'] for x in info['DomainRecords']['Record'] if x['RR'] == rr)
+    record_id = next(x['RecordId'] for x in info['DomainRecords']['Record'] if x['RR'] == record_name)
     logging.info('aliyun domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     params = [
         ('Format', 'json'),
@@ -70,7 +70,7 @@ def aliyun(key, secret, domain):
         ('SignatureVersion', '1.0'),
         ('Action', 'UpdateDomainRecord'),
         ('RecordId', record_id),
-        ('RR', rr),
+        ('RR', record_name),
         ('Type', 'A'),
         ('Value', ip),
         ('TTL', 600),
