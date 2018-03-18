@@ -142,6 +142,15 @@ def gandi(key, domain):
     logging.info('gandi domain=%r to ip=%r info: %s', domain, ip, info)
 
 
+def godaddy(key, secret, domain):
+    ip = _getip(domain)
+    record_name, root_domain = _split(domain)
+    headers = {'Authorization': 'sso-key %s:%s' % (key, secret), 'Content-type': 'application/json'}
+    api_url = 'https://api.godaddy.com/v1/domains/%s/records/A/%s' % (root_domain, record_name)
+    _, _, info = _request('PUT', api_url, headers=headers, json={'data': ip, 'ttl': '600'}, return_json=True)
+    logging.info('godaddy domain=%r to ip=%r info: %s', domain, ip, info)
+
+
 def he(key, domain):
     ip = _getip(domain)
     params = {'hostname': domain, 'password': key, 'myip': ip}
