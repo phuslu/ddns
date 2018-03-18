@@ -13,6 +13,7 @@ import hmac
 import json
 import logging
 import os
+import random
 import re
 import socket
 import sys
@@ -166,6 +167,48 @@ def he(key, domain):
     logging.info('dnspod domain=%r to ip=%r result: %s', domain, ip, content)
 
 
+def qcloud(secret_id, secret_key, domain):
+    ip = _getip()
+    if ip == socket.gethostbyname(domain):
+        logging.info('remote ip and local ip is same to %s, exit.', ip)
+        return
+    sign = lambda p: base64.b64encode(hmac.new(secret_key.encode(), ('GETcns.api.qcloud.com/v2/index.php?'+urlencode(sorted(p))).encode(), hashlib.sha1).digest())
+    api_url = 'https://cns.api.qcloud.com/v2/index.php'
+    record_name, root_domain = _split(domain)
+    params = [
+        ('Region', 'sh'),
+        ('Timestamp', str(int(time.time()))),
+        ('Nonce', str(random.randint(1, 65536))),
+        ('SecretId', secret_id),
+        ('SignatureMethod', 'HmacSHA1'),
+        ('Action', 'RecordList'),
+        ('domain', root_domain),
+        ('subDomain', record_name),
+    ]
+    params += [('Signature', sign(params))]
+    _, _, info = _request('GET', api_url, params=params, return_json=True)
+    record_id = next(x['id'] for x in info['data']['records'] if x['name'] == record_name and x['line'] == u'默认')
+    logging.info('aliyun domain=%r to ip=%r record_id: %s', domain, ip, record_id)
+    params = [
+        ('Region', 'sh'),
+        ('Timestamp', str(int(time.time()))),
+        ('Nonce', str(random.randint(1, 65536))),
+        ('SecretId', secret_id),
+        ('SignatureMethod', 'HmacSHA1'),
+        ('Action', 'RecordModify'),
+        ('domain', root_domain),
+        ('subDomain', record_name),
+        ('recordId', record_id),
+        ('recordType', 'A'),
+        ('recordLine', u'默认'),
+        ('value', ip),
+        ('ttl', '600'),
+    ]
+    params += [('Signature', sign(params))]
+    _, _, info = _request('GET', api_url, params=params, return_json=True)
+    logging.info('aliyun domain=%r to ip=%r info: %s', domain, ip, info)
+
+
 def _getip():
     urls = [
         'http://ip.3322.org',
@@ -210,6 +253,7 @@ def _request(method, url, params=None, json=None, data=None, headers=None, timeo
         timeout = 8
     req = Request(url, data=data, headers=headers)
     req.get_method = lambda: method
+    logging.info('%s \"%s\"', method, url)
     try:
         resp = urlopen(req, timeout=timeout)
     except HTTPError as e:
