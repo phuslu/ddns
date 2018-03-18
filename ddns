@@ -191,6 +191,16 @@ def linode(key, domain):
     logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
 
 
+def ns1(key, domain):
+    ip = _getip(domain)
+    headers = {'X-NSONE-Key': key}
+    _, root_domain = _split(domain)
+    url = 'https://api.nsone.net/v1/zones/%s/%s/A' % (root_domain, domain)
+    info = {'answers':[{'answer':[ip]}], 'ttl': 600}
+    _, _, info = _request('POST', url, headers=headers, json=info, return_json=True)
+    logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
+
+
 def qcloud(secret_id, secret_key, domain):
     ip = _getip(domain)
     sign = lambda p: base64.b64encode(hmac.new(secret_key.encode(), ('GETcns.api.qcloud.com/v2/index.php?'+urlencode(sorted(p))).encode(), hashlib.sha1).digest())
