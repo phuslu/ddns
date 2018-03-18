@@ -353,11 +353,9 @@ def _split(domain):
 def _main():
     applet = os.path.basename(sys.argv[0])
     funcs = [v for v in globals().values() if type(v) is type(_main) and v.__module__ == '__main__' and not v.__name__.startswith('_')]
-    if not PY3:
+    for attr in ['doc', 'defaults', 'code'] if not PY3 else []:
         for func in funcs:
-            setattr(func, '__doc__', getattr(func, 'func_doc'))
-            setattr(func, '__defaults__', getattr(func, 'func_defaults'))
-            setattr(func, '__code__', getattr(func, 'func_code'))
+            setattr(func, '__'+attr+'__', getattr(func, 'func_'+attr))
     funcs = sorted(funcs, key=lambda x:x.__name__)
     params = collections.OrderedDict((f.__name__, list(zip_longest(f.__code__.co_varnames[:f.__code__.co_argcount][::-1], (f.__defaults__ or [])[::-1]))[::-1]) for f in funcs)
     def usage(applet):
