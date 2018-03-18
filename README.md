@@ -7,6 +7,7 @@ Examples:
         ddns cloudflare --email EMAIL --key KEY --domain DOMAIN
         ddns cloudxns --key KEY --secret SECRET --domain DOMAIN
         ddns digitalocean --key KEY --domain DOMAIN
+        ddns dnsimple --account-id ACCOUNT_ID --key KEY --domain DOMAIN
         ddns dnspod --email EMAIL --password PASSWORD --domain DOMAIN
         ddns gandi --key KEY --domain DOMAIN
         ddns godaddy --key KEY --secret SECRET --domain DOMAIN
@@ -16,7 +17,6 @@ Examples:
         ddns qcloud --secret-id SECRET_ID --secret-key SECRET_KEY --domain DOMAIN
 ```
 ### Roadmap
-- [ ] dnsimple
 - [ ] namecheap
 - [ ] namesilo
 - [ ] cloudns
