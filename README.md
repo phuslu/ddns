@@ -13,11 +13,11 @@ Examples:
         ddns godaddy --key KEY --secret SECRET --domain DOMAIN
         ddns he --key KEY --domain DOMAIN
         ddns linode --key KEY --domain DOMAIN
+        ddns namecheap --password PASSWORD --domain DOMAIN
         ddns ns1 --key KEY --domain DOMAIN
         ddns qcloud --secret-id SECRET_ID --secret-key SECRET_KEY --domain DOMAIN
 ```
 ### Roadmap
-- [ ] namecheap
 - [ ] namesilo
 - [ ] cloudns
 - [ ] route53
