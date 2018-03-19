@@ -39,6 +39,7 @@ import sys
 import threading
 import time
 import uuid
+import xml.etree.ElementTree
 
 if PY3:
     from itertools import zip_longest
@@ -244,6 +245,20 @@ def namecheap(password, domain):
     logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
 
 
+def namesilo(password, domain):
+    ip = _getip(domain)
+    record_name, root_domain = _split(domain)
+    url = 'https://www.namesilo.com/api/dnsListRecords'
+    params = {'version': '1', 'type': 'xml', 'key': key, 'domain': root_domain}
+    _, _, tree = _request('GET', url, params=params, return_xml=True)
+    record_id = next(x.find('record_id').text for x in tree.find('reply').iter('resource_record') if x.find('host').text == domain and x.find('type').text == 'A')
+    logging.info('namesilo domain=%r to ip=%r record_id: %s', domain, ip, record_id)
+    url = 'https://www.namesilo.com/api/dnsUpdateRecord'
+    params = {'version': '1', 'type': 'xml', 'key': key, 'domain': root_domain, 'rrid': record_id, 'rrvalue': ip, 'rrhost': record_name, 'rrttl': '600'}
+    _, _, info = _request('GET', url, params=params)
+    logging.info('namesilo domain=%r to ip=%r result: %s', domain, ip, info)
+
+
 def qcloud(secret_id, secret_key, domain):
     ip = _getip(domain)
     sign = lambda p: base64.b64encode(hmac.new(secret_key.encode(), ('GETcns.api.qcloud.com/v2/index.php?'+urlencode(sorted(p))).encode(), hashlib.sha1).digest())
@@ -305,7 +320,7 @@ def _getip(domain):
     return ip
 
 
-def _request(method, url, params=None, json=None, data=None, headers=None, timeout=None, return_json=False):
+def _request(method, url, params=None, json=None, data=None, headers=None, timeout=None, return_json=False, return_xml=False):
     jsonlib = __import__('json')
     if headers is None:
         headers = {}
@@ -338,6 +353,8 @@ def _request(method, url, params=None, json=None, data=None, headers=None, timeo
     content = resp.read()
     if return_json and resp.code == 200:
         content = jsonlib.loads(content)
+    if return_xml and resp.code == 200:
+        content = xml.etree.ElementTree.fromstring(content)
     return resp.code, dict(resp.headers), content
 
 
