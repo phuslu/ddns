@@ -63,49 +63,26 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 def aliyun(key, secret, domain):
     ip = _getip(domain)
-    rfc3339 = lambda: time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-    sign = lambda p: base64.b64encode(hmac.new((secret+'&').encode(), ('GET&%2F&'+quote_plus(urlencode(sorted(p)))).encode(), hashlib.sha1).digest())
-    api_url = 'https://alidns.aliyuncs.com/'
     record_name, root_domain = _split(domain)
-    params = [
-        ('Format', 'json'),
-        ('Version', '2015-01-09'),
-        ('AccessKeyId', key),
-        ('Timestamp', rfc3339()),
-        ('SignatureMethod', 'HMAC-SHA1'),
-        ('SignatureNonce', uuid.uuid4()),
-        ('SignatureVersion', '1.0'),
-        ('Action', 'DescribeDomainRecords'),
-        ('DomainName', root_domain),
-    ]
-    params += [('Signature', sign(params))]
+    rfc3339 = lambda: time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+    sign = lambda p: base64.b64encode(hmac.new((secret+'&').encode(), ('GET&%2F&'+quote_plus(urlencode(sorted(p.items())))).encode(), hashlib.sha1).digest())
+    api_url = 'https://alidns.aliyuncs.com/'
+    common_params = {'Format': 'json', 'Version': '2015-01-09', 'AccessKeyId': key, 'Timestamp': rfc3339(), 'SignatureMethod': 'HMAC-SHA1', 'SignatureNonce': uuid.uuid4(), 'SignatureVersion': '1.0'}
+    params = dict(common_params.items(), Action='DescribeDomainRecords', DomainName=root_domain)
+    params['Signature'] = sign(params)
     _, _, info = _request('GET', api_url, params=params, return_json=True)
     record_id = next(x['RecordId'] for x in info['DomainRecords']['Record'] if x['RR'] == record_name)
     logging.info('aliyun domain=%r to ip=%r record_id: %s', domain, ip, record_id)
-    params = [
-        ('Format', 'json'),
-        ('Version', '2015-01-09'),
-        ('AccessKeyId', key),
-        ('Timestamp', rfc3339()),
-        ('SignatureMethod', 'HMAC-SHA1'),
-        ('SignatureNonce', uuid.uuid4()),
-        ('SignatureVersion', '1.0'),
-        ('Action', 'UpdateDomainRecord'),
-        ('RecordId', record_id),
-        ('RR', record_name),
-        ('Type', 'A'),
-        ('Value', ip),
-        ('TTL', 600),
-    ]
-    params += [('Signature', sign(params))]
+    params = dict(common_params.items(), Action='UpdateDomainRecord', RecordId=record_id, RR=record_name, Type='A', Value=ip, TTL='600')
+    params['Signature'] = sign(params)
     _, _, info = _request('GET', api_url, params=params, return_json=True)
     logging.info('aliyun domain=%r to ip=%r info: %s', domain, ip, info)
 
 
 def cloudflare(email, key, domain):
     ip = _getip(domain)
-    headers = {'X-Auth-Email': email, 'X-Auth-Key': key, 'Content-Type': 'application/json'}
     _, zone_name = _split(domain)
+    headers = {'X-Auth-Email': email, 'X-Auth-Key': key, 'Content-Type': 'application/json'}
     api_url = 'https://api.cloudflare.com/client/v4/zones?name=%s' % zone_name
     code, _, info = _request('GET', api_url, headers=headers, return_json=True)
     zone_id = info['result'][0]['id']
@@ -133,8 +110,8 @@ def cloudxns(key, secret, domain):
 
 def digitalocean(key, domain):
     ip = _getip(domain)
-    headers = {'Authorization': 'Bearer '+key}
     record_name, root_domain = _split(domain)
+    headers = {'Authorization': 'Bearer '+key}
     url = 'https://api.digitalocean.com/v2/domains/%s/records' % root_domain
     _, _, info = _request('GET', url, headers=headers, return_json=True)
     record_id = next(x['id'] for x in info['domain_records'] if x['name'] == record_name and x['type'] == 'A')
@@ -147,8 +124,8 @@ def digitalocean(key, domain):
 
 def dnsimple(account_id, key, domain):
     ip = _getip(domain)
-    headers = {'Authorization': 'Bearer '+key, 'Accept': 'application/json'}
     record_name, root_domain = _split(domain)
+    headers = {'Authorization': 'Bearer '+key, 'Accept': 'application/json'}
     _, _, info = _request('GET', 'https://api.dnsimple.com/v2/whoami', headers=headers, return_json=True)
     account_id = info['data']['id']
     logging.info('digitalocean domain=%r to ip=%r account_id: %s', domain, ip, account_id)
@@ -173,22 +150,15 @@ def dnspod(email, password, domain):
     _, _, info = _request('POST', 'https://dnsapi.cn/Record.List', params=params, return_json=True)
     record_id = next(x['id'] for x in info['records'] if x['name'] == record_name and x['type'] == 'A')
     logging.info('dnspod domain=%r to ip=%r record_id: %s', domain, ip, record_id)
-    params.update({
-        'record_id': record_id,
-        'record_type': 'A',
-        'record_line': u'默认',
-        'value': ip,
-        'mx': 5,
-        'sub_domain': record_name,
-    })
+    params.update({'record_id':record_id, 'record_type':'A', 'record_line':u'默认', 'value':ip, 'mx':5, 'sub_domain':record_name})
     _, _, info = _request('POST', 'https://dnsapi.cn/Record.Modify', params=params, return_json=True)
     logging.info('dnspod domain=%r to ip=%r info: %s', domain, ip, info)
 
 
 def gandi(key, domain):
     ip = _getip(domain)
-    headers = {'X-Api-Key': key, 'Content-Type': 'application/json'}
     record_name, zone_name = _split(domain)
+    headers = {'X-Api-Key': key, 'Content-Type': 'application/json'}
     api_url = 'https://dns.api.gandi.net/api/v5/zones'
     _, _, info = _request('GET', api_url, headers=headers, return_json=True)
     zone_id = next(x['uuid'] for x in info if x['name'] == zone_name)
@@ -216,8 +186,8 @@ def he(key, domain):
 
 def linode(key, domain):
     ip = _getip(domain)
-    headers = {'Authorization': 'Bearer '+key}
     record_name, root_domain = _split(domain)
+    headers = {'Authorization': 'Bearer '+key}
     _, _, info = _request('GET', 'https://api.linode.com/v4/domains', headers=headers, return_json=True)
     domain_id = next(x['id'] for x in info['data'] if x['domain'] == root_domain)
     logging.info('linode domain=%r to ip=%r domain_id: %s', domain, ip, domain_id)
@@ -230,8 +200,8 @@ def linode(key, domain):
 
 def ns1(key, domain):
     ip = _getip(domain)
-    headers = {'X-NSONE-Key': key}
     _, root_domain = _split(domain)
+    headers = {'X-NSONE-Key': key}
     url = 'https://api.nsone.net/v1/zones/%s/%s/A' % (root_domain, domain)
     info = {'answers':[{'answer':[ip]}], 'ttl': 600}
     _, _, info = _request('POST', url, headers=headers, json=info, return_json=True)
@@ -262,39 +232,17 @@ def namesilo(key, domain):
 
 def qcloud(secret_id, secret_key, domain):
     ip = _getip(domain)
-    sign = lambda p: base64.b64encode(hmac.new(secret_key.encode(), ('GETcns.api.qcloud.com/v2/index.php?'+urlencode(sorted(p))).encode(), hashlib.sha1).digest())
-    api_url = 'https://cns.api.qcloud.com/v2/index.php'
     record_name, root_domain = _split(domain)
-    params = [
-        ('Region', 'sh'),
-        ('Timestamp', str(int(time.time()))),
-        ('Nonce', str(random.randint(1, 65536))),
-        ('SecretId', secret_id),
-        ('SignatureMethod', 'HmacSHA1'),
-        ('Action', 'RecordList'),
-        ('domain', root_domain),
-        ('subDomain', record_name),
-    ]
-    params += [('Signature', sign(params))]
+    sign = lambda p: base64.b64encode(hmac.new(secret_key.encode(), ('GETcns.api.qcloud.com/v2/index.php?'+urlencode(sorted(p.items()))).encode(), hashlib.sha1).digest())
+    api_url = 'https://cns.api.qcloud.com/v2/index.php'
+    common_params = {'Region':'sh', 'Timestamp':str(int(time.time())), 'Nonce':str(random.randint(1, 65536)), 'SecretId':secret_id, 'SignatureMethod':'HmacSHA1'}
+    params = dict(common_params.items(), Action='RecordList', domain=root_domain, subDomain=record_name)
+    params['Signature'] = sign(params)
     _, _, info = _request('GET', api_url, params=params, return_json=True)
     record_id = next(x['id'] for x in info['data']['records'] if x['name'] == record_name and x['line'] == u'默认')
     logging.info('aliyun domain=%r to ip=%r record_id: %s', domain, ip, record_id)
-    params = [
-        ('Region', 'sh'),
-        ('Timestamp', str(int(time.time()))),
-        ('Nonce', str(random.randint(1, 65536))),
-        ('SecretId', secret_id),
-        ('SignatureMethod', 'HmacSHA1'),
-        ('Action', 'RecordModify'),
-        ('domain', root_domain),
-        ('subDomain', record_name),
-        ('recordId', record_id),
-        ('recordType', 'A'),
-        ('recordLine', u'默认'),
-        ('value', ip),
-        ('ttl', '600'),
-    ]
-    params += [('Signature', sign(params))]
+    params = dict(common_params.items(), Action='RecordModify', domain=root_domain, subDomain=record_name, recordId=record_id, recordType='A', recordLine=u'默认', value=ip, ttl='600')
+    params['Signature'] = sign(params)
     _, _, info = _request('GET', api_url, params=params, return_json=True)
     logging.info('aliyun domain=%r to ip=%r info: %s', domain, ip, info)
 
