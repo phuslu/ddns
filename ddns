@@ -304,19 +304,19 @@ def _request(method, url, params=None, json=None, data=None, headers=None, timeo
 
 def _split(domain):
     """
-    .ac .ad .ae .af .ag .ai .al .am .an .ao .ap .aq .ar .as .at .au .aw .ax .az .ba
-    .bb .bd .be .bf .bg .bh .bi .bj .bm .bn .bo .br .bs .bt .bv .bw .by .bz .ca .cc
-    .cd .cf .cg .ch .ci .ck .cl .cm .cn .co .cr .cs .cu .cv .cx .cy .cz .de .dj .dk
-    .dm .do .dz .ec .ee .eg .eh .er .es .et .eu .fi .fj .fk .fm .fo .fr .ga .gb .gd
-    .ge .gf .gg .gh .gi .gl .gm .gn .gp .gq .gr .gs .gt .gu .gw .gy .hk .hm .hn .hr
-    .ht .hu .id .ie .il .im .in .io .iq .ir .is .it .je .jm .jo .jp .ke .kg .kh .ki
-    .km .kn .kp .kr .kw .ky .kz .la .lb .lc .li .lk .lr .ls .lt .lu .lv .ly .ma .mc
-    .md .me .mg .mh .mk .ml .mm .mn .mo .mp .mq .mr .ms .mt .mu .mv .mw .mx .my .mz
-    .na .nc .ne .nf .ng .ni .nl .no .np .nr .nu .nz .om .pa .pe .pf .pg .ph .pk .pl
-    .pm .pn .pr .ps .pt .pw .py .qa .re .ro .ru .rw .sa .sb .sc .sd .se .sg .sh .si
-    .sj .sk .sl .sm .sn .so .sr .st .sv .sy .sz .tc .td .tf .tg .th .tj .tk .tl .tm
-    .tn .to .tp .tr .tt .tv .tw .tz .ua .ug .uk .um .us .uy .uz .va .vc .ve .vg .vi
-    .vn .vu .wf .ws .ye .yt .yu .za .zm .zw
+    .ac .ad .ae .af .ag .ai .al .am .an .ao .ap .aq .ar .as .at .au .aw .ax .az .ba .bb
+    .bd .be .bf .bg .bh .bi .bj .bm .bn .bo .br .bs .bt .bv .bw .by .bz .ca .cc .cd .cf
+    .cg .ch .ci .ck .cl .cm .cn .co .cr .cs .cu .cv .cx .cy .cz .de .dj .dk .dm .do .dz
+    .ec .ee .eg .eh .er .es .et .eu .fi .fj .fk .fm .fo .fr .ga .gb .gd .ge .gf .gg .gh
+    .gi .gl .gm .gn .gp .gq .gr .gs .gt .gu .gw .gy .hk .hm .hn .hr .ht .hu .id .ie .il
+    .im .in .io .iq .ir .is .it .je .jm .jo .jp .ke .kg .kh .ki .km .kn .kp .kr .kw .ky
+    .kz .la .lb .lc .li .lk .lr .ls .lt .lu .lv .ly .ma .mc .md .me .mg .mh .mk .ml .mm
+    .mn .mo .mp .mq .mr .ms .mt .mu .mv .mw .mx .my .mz .na .nc .ne .net.id .nf .ng .ni
+    .nl .no .np .nr .nu .nz .om .pa .pe .pf .pg .ph .pk .pl .pm .pn .pr .ps .pt .pw .py
+    .qa .re .ro .rs .ru .rw .sa .sb .sc .za .sd .se .sg .sh .si .sj .sk .sl .sm .sn .so
+    .sr .st .sv .sy .sz .tc .td .tf .tg .th .tj .tk .tl .tm .tn .to .tp .tr .tt .tv .tw
+    .tz .ua .ug .uk .um .us .uy .uz .va .vc .ve .vg .vi .vn .vu .wf .ws .ye .yt .yu .za
+    .zm .zw
 
     .art .biz .cat .com .edu .fun .gov .ink .int .kim .ltd .men .mil .net .one .org
     .pro .pub .red .ren .tel .top .vip .web .xin .xyz
@@ -327,14 +327,167 @@ def _split(domain):
     .photography .place .review .science .search .services .shop .site .software
     .solutions .space .store .stream .studio .systems .team .tech .technology .today
     .tools .travel .video .wang .website .wiki .work .works .yokohama
+
+    .4fd.in .4fd.us .a.se .ab.ca .abo.pa .ac.ae .ac.at .ac.cn .ac.cr .ac.cy .ac.fj
+    .ac.fk .ac.gn .ac.id .ac.il .ac.in .ac.ir .ac.jp .ac.ke .ac.kr .ac.ma .ac.me
+    .ac.mu .ac.mw .ac.mz .ac.ni .ac.nz .ac.om .ac.pa .ac.pr .ac.rs .ac.ru .ac.rw
+    .ac.se .ac.sz .ac.th .ac.tj .ac.tz .ac.ug .ac.uk .ac.vn .ac.yu .ac.za .ac.zm
+    .ad.jp .adm.br .adv.br .adygeya.ru .aero.mv .aero.tt .agr.br .agric.za
+    .agrinet.tn .ah.cn .alt.za .altai.ru .am.br .amur.ru .arkhangelsk.ru .arq.br
+    .art.br .art.do .art.dz .art.pl .art.sn .arts.nf .arts.ro .asn.au .asn.lv
+    .assn.lk .asso.dz .asso.fr .asso.km .asso.mc .asso.re .astrakhan.ru .ato.br
+    .av.tr .b.br .b.se .bashkiria.ru .bbs.tr .bc.ca .bd.se .bel.tr .belau.pw
+    .belgorod.ru .bialystok.pl .bio.br .bir.ru .biz.bb .biz.bh .biz.ck .biz.cy
+    .biz.et .biz.fj .biz.ki .biz.mv .biz.ng .biz.nr .biz.om .biz.pk .biz.pl .biz.pr
+    .biz.tj .biz.tr .biz.tt .biz.ua .biz.vn .bj.cn .bl.uk .blog.br .bmd.br .bourse.za
+    .british-library.uk .bryansk.ru .buryatia.ru .busan.kr .bz,com.bz .bz,edu.bz
+    .bz,gov.bz .bz,net.bz .bz,org.bz .c.se .cat.tt .cbg.ru .cc.bh .chel.ru
+    .chelyabinsk.ru .cherkassy.ua .chernigov.ua .chernovtsy.ua .chita.ru .chita.ru
+    .chukotka.ru .chungbuk.kr .chungnam.kr .chuvashia.ru .cim.br .city.za .ck.ua
+    .club.tw .cn.ua .cng.br .cnt.br .co.ae .co.ao .co.at .co.ba .co.bb .co.ck .co.cr
+    .co.fk .co.gg .co.id .co.il .co.in .co.ir .co.je .co.jp .co.ke .co.kr .co.ma .co.me
+    .co.mu .co.mw .co.mz .co.na .co.ni .co.nz .co.om .co.pw .co.rs .co.rw .co.sh .co.st
+    .co.sz .co.th .co.tj .co.tt .co.tz .co.ua .co.ug .co.uk .co.ve .co.vi .co.ye .co.yu
+    .co.za .co.zm .com.ac .com.af .com.al .com.ar .com.au .com.ba .com.bb .com.bh
+    .com.bn .com.bo .com.br .com.bs .com.cn .com.co .com.cy .com.do .com.dz .com.ec
+    .com.eg .com.er .com.es .com.et .com.fj .com.fr .com.gh .com.gn .com.gr .com.gt
+    .com.gu .com.hk .com.iq .com.jo .com.kh .com.ki .com.km .com.kw .com.ky .com.kz
+    .com.lb .com.lk .com.lr .com.lv .com.ly .com.mg .com.mk .com.ml .com.mo .com.mt
+    .com.mu .com.mv .com.mw .com.mx .com.my .com.na .com.nf .com.ng .com.ni .com.np
+    .com.nr .com.om .com.pa .com.pe .com.ph .com.pk .com.pl .com.pr .com.ps .com.pt
+    .com.py .com.qa .com.re .com.ro .com.ru .com.rw .com.sa .com.sb .com.sc .com.sd
+    .com.sg .com.sh .com.sl .com.sn .com.st .com.sv .com.sy .com.tj .com.tn .com.tr
+    .com.tt .com.tw .com.ua .com.uy .com.ve .com.vi .com.vn .com.ye .com.zm .conf.lv
+    .consulado.st .coop.br .coop.km .coop.mv .coop.mw .coop.tt .cq.cn .cr .cri.nz
+    .crimea.ua .csiro.au .cv.ua .cybernet.za .cym.uk .d.se .daegu.kr .daejeon.kr
+    .dagestan.ru .db.za .de.ki .defense.tn .dn.ua .dnepropetrovsk.ua .dni.us .dnssec.ir
+    .donetsk.ua .dp.ua .dr.tr .e-burg.ru .e.se .ebiz.tw .ecape.school.za .ecn.br .ed.ao
+    .ed.cr .ed.jp .ed.pw .edu.af .edu.al .edu.ar .edu.au .edu.ba .edu.bb .edu.bh .edu.bn
+    .edu.bo .edu.br .edu.bs .edu.ck .edu.cn .edu.co .edu.do .edu.dz .edu.ec .edu.eg
+    .edu.er .edu.es .edu.et .edu.gh .edu.gr .edu.gt .edu.gu .edu.hk .edu.in .edu.iq
+    .edu.it .edu.jo .edu.kh .edu.ki .edu.km .edu.kn .edu.kw .edu.ky .edu.kz .edu.lb
+    .edu.lk .edu.lr .edu.lv .edu.ly .edu.me .edu.mg .edu.mk .edu.ml .edu.mn .edu.mo
+    .edu.mt .edu.mv .edu.mw .edu.mx .edu.my .edu.mz .edu.ng .edu.ni .edu.np .edu.nr
+    .edu.om .edu.pa .edu.pe .edu.ph .edu.pk .edu.pl .edu.pr .edu.ps .edu.pt .edu.py
+    .edu.qa .edu.rs .edu.ru .edu.rw .edu.sa .edu.sb .edu.sc .edu.sd .edu.sg .edu.sh
+    .edu.sl .edu.sn .edu.st .edu.sv .edu.sy .edu.tj .edu.tr .edu.tt .edu.tw .edu.ua
+    .edu.uy .edu.ve .edu.vn .edu.yu .edu.za .edu.zm .edunet.tn .ekloges.cy .embaixada.st
+    .eng.br .ens.tn .ernet.in .es.kr .esp.br .est.pr .etc.br .eti.br .eun.eg .f.se
+    .fam.pk .far.br .fed.us .fi.cr .fin.ec .fin.tn .firm.in .firm.nf .firm.ro .fj.cn
+    .flog.br .fm.br .fnd.br .fot.br .fr .fs.school.za .fst.br .g.se .g12.br .game.tw
+    .gangwon.kr .gd.cn .gda.pl .gdansk.pl .geek.nz .gen.ck .gen.in .gen.nz .gen.tr
+    .ggf.br .go.cr .go.id .go.jp .go.ke .go.kr .go.pw .go.th .go.tj .go.tz .go.ug
+    .gob.ar .gob.bo .gob.do .gob.es .gob.gt .gob.mx .gob.ni .gob.pa .gob.pe .gob.pk
+    .gob.sv .gob.ve .gok.pk .gon.pk .gop.pk .gorzow.pl .gos.pk .gouv.fr .gouv.km
+    .gouv.rw .gouv.sn .gov.ac .gov.ae .gov.af .gov.al .gov.ar .gov.ar .gov.au .gov.ba
+    .gov.bb .gov.bh .gov.bn .gov.bo .gov.br .gov.bs .gov.ck .gov.cn .gov.co .gov.cy
+    .gov.do .gov.dz .gov.ec .gov.eg .gov.er .gov.et .gov.fk .gov.gh .gov.gn .gov.gr
+    .gov.gu .gov.hk .gov.il .gov.in .gov.iq .gov.ir .gov.it .gov.jo .gov.kh .gov.ki
+    .gov.kn .gov.kw .gov.ky .gov.kz .gov.lb .gov.lk .gov.lr .gov.lv .gov.ly .gov.ma
+    .gov.me .gov.mg .gov.mk .gov.ml .gov.mn .gov.mo .gov.mt .gov.mu .gov.mv .gov.mw
+    .gov.my .gov.mz .gov.ng .gov.np .gov.nr .gov.om .gov.ph .gov.pk .gov.pl .gov.pr
+    .gov.ps .gov.pt .gov.py .gov.qa .gov.rs .gov.ru .gov.rw .gov.sa .gov.sb .gov.sc
+    .gov.sd .gov.sg .gov.sh .gov.sl .gov.st .gov.sy .gov.tj .gov.tn .gov.tr .gov.tt
+    .gov.tw .gov.ua .gov.uk .gov.vn .gov.ye .gov.yu .gov.za .gov.zm .govt.nz .govt.uk
+    .gp.school.za .gr.jp .grondar.za .grozny.ru .grp.lk .gs.cn .gub.uy .gv.ao .gv.at
+    .gwangju.kr .gx.cn .gyeongbuk.kr .gyeonggi.kr .gyeongnam.kr .gz.cn .h.se .ha.cn
+    .hb.cn .he.cn .health.nz .health.vn .hi.cn .hl.cn .hn.cn .hotel.lk .hs.kr .i.ph
+    .i.se .iaccess.za .icnet.uk .id.au .id.ir .id.lv .id.ly .idf.il .idn.sg .idv.hk
+    .idv.tw .if.ua .imb.br .imt.za .in .in.rs .in.th .in.ua .inca.za .incheon.kr .ind.br
+    .ind.er .ind.gt .ind.in .ind.tn .inf.br .inf.mk .info.bb .info.bh .info.ck .info.ec
+    .info.et .info.fj .info.ke .info.ki .info.mv .info.nf .info.nr .info.pl .info.pr
+    .info.ro .info.sd .info.tj .info.tn .info.tr .info.tt .info.ve .info.vn .ing.pa
+    .int.ar .int.bo .int.lk .int.mv .int.mw .int.pt .int.ru .int.rw .int.tj .int.tt
+    .int.vn .intl.tn .iq .ir .irkutsk.ru .isa.us .isla.pr .it.ao .its.me
+    .ivano-frankivsk.ua .ivanovo.ru .iwi.nz .izhevsk.ru .jar.ru .jeju.kr .jeonbuk.kr
+    .jeonnam.kr .jet.uk .jl.cn .jobs.tt .jor.br .joshkar-ola.ru .js.cn .jus.br .jx.cn
+    .k.se .k12.il .k12.tr .k12.vi .kalmykia.ru .kaluga.ru .kamchatka.ru .karelia.ru
+    .katowice.pl .kazan.ru .kchr.ru .kemerovo.ru .kg.kr .kh.ua .khabarovsk.ru
+    .khakassia.ru .kharkov.ua .kherson.ua .khmelnitskiy.ua .khv.ru .kids.us .kiev.ua
+    .kirov.ru .kirovograd.ua .km .km.ua .koenig.ru .komi.ru .kostroma.ru .kr .kr.ua
+    .krakow.pl .kranoyarsk.ru .ks.ua .kuban.ru .kurgan.ru .kursk.ru .kv.ua
+    .kzn.school.za .l.se .landesign.za .law.za .lea.uk .lel.br .lg.jp .lg.ua .lipetsk.ru
+    .ln.cn .lodz.pl .lp.school.za .ltd.cy .ltd.lk .ltd.uk .ltd.ye .lublin.pl .lugansk.ua
+    .lutsk.ua .lviv.ua .m.se .ma .magadan.ru .maori.nz .mari-el.ru .mari.ru .marine.ru
+    .mat.br .mb.ca .me.ke .me.ua .me.uk .me.ye .med.br .med.ec .med.ly .med.om .med.pa
+    .med.sa .med.sd .medecin.km .mi.th .mil.ac .mil.ae .mil.al .mil.ar .mil.ba .mil.bo
+    .mil.br .mil.cn .mil.co .mil.do .mil.ec .mil.eg .mil.er .mil.fj .mil.gh .mil.gr
+    .mil.gt .mil.id .mil.in .mil.iq .mil.jo .mil.kh .mil.km .mil.kr .mil.kz .mil.lv
+    .mil.mg .mil.mv .mil.my .mil.ng .mil.ni .mil.np .mil.nz .mil.om .mil.pe .mil.ph
+    .mil.pl .mil.py .mil.qa .mil.ru .mil.rw .mil.st .mil.sy .mil.tj .mil.tt .mil.tw
+    .mil.uk .mil.uy .mil.ve .mil.za .mincom.tn .mk.ua .mob.ki .mobi.ke .mobi.ng .mobi.tt
+    .mod.uk .mod.uk .mordovia.ru .mosreg.ru .mpm.school.za .ms.kr .msk.ru .muni.il
+    .murmansk.ru .mus.br .museum.mv .museum.mw .museum.om .museum.tt .n.se .nalchik.ru
+    .name.ae .name.cy .name.eg .name.et .name.fj .name.jo .name.mk .name.mv .name.my
+    .name.ng .name.pr .name.tj .name.tr .name.tt .name.vn .nat.tn
+    .national-library-scotland.uk .nb.ca .ncape.school.za .ne.jp .ne.ke .ne.kr .ne.pw
+    .ne.tz .ne.ug .nel.uk .net.ac .net.ae .net.af .net.al .net.ar .net.au .net.ba
+    .net.bb .net.bh .net.bn .net.bo .net.br .net.bs .net.ck .net.cn .net.co .net.cy
+    .net.do .net.dz .net.ec .net.eg .net.er .net.et .net.fj .net.fk .net.gg .net.gn
+    .net.gr .net.gt .net.gu .net.hk .net.id .net.il .net.in .net.iq .net.ir .net.je
+    .net.jo .net.kh .net.ki .net.kn .net.kw .net.ky .net.kz .net.lb .net.lk .net.lr
+    .net.lv .net.ly .net.ma .net.me .net.mk .net.ml .net.mo .net.mt .net.mu .net.mv
+    .net.mw .net.mx .net.my .net.nf .net.ng .net.ni .net.np .net.nr .net.nz .net.om
+    .net.pa .net.pe .net.ph .net.pk .net.pl .net.pr .net.ps .net.pt .net.py .net.qa
+    .net.ru .net.rw .net.sa .net.sb .net.sc .net.sd .net.sg .net.sh .net.sl .net.st
+    .net.sy .net.th .net.tj .net.tn .net.tr .net.tt .net.tw .net.ua .net.uk .net.uy
+    .net.ve .net.vi .net.vn .net.ye .net.za .net.zm .news.sy .nf.ca .ngo.lk .ngo.ph
+    .ngo.pl .ngo.za .nhs.uk .nhs.uk .nic.in .nic.in .nic.tj .nic.uk .nikolaev.ua .nis.za
+    .nl.ca .nls.uk .nm.cn .nnov.ru .nom.br .nom.co .nom.es .nom.fk .nom.fr .nom.km
+    .nom.mg .nom.ni .nom.pa .nom.pe .nom.re .nom.ro .nom.sh .nom.za .nome.pt .not.br
+    .notaires.km .nov.ru .novosibirsk.ru .ns.ca .nsk.ru .nsn.us .nt.ca .nt.ro .ntr.br
+    .nu.ca .nw.school.za .nx.cn .o.se .od.ua .odessa.ua .odo.br .og.ao .olivetti.za
+    .olsztyn.pl .omsk.ru .on.ca .or.at .or.cr .or.id .or.jp .or.ke .or.kr .or.mu .or.pw
+    .or.th .or.tz .or.ug .orenburg.ru .org.ac .org.ae .org.af .org.al .org.ar .org.au
+    .org.ba .org.bb .org.bh .org.bn .org.bo .org.br .org.bs .org.ck .org.cn .org.co
+    .org.cy .org.do .org.dz .org.ec .org.eg .org.er .org.es .org.et .org.fj .org.fk
+    .org.gg .org.gh .org.gn .org.gr .org.gt .org.gu .org.hk .org.il .org.in .org.iq
+    .org.ir .org.je .org.jo .org.kh .org.ki .org.kn .org.kw .org.ky .org.kz .org.lb
+    .org.lk .org.lr .org.lv .org.ly .org.ma .org.me .org.mg .org.mk .org.ml .org.mn
+    .org.mo .org.mt .org.mu .org.mv .org.mw .org.mx .org.my .org.mz .org.ng .org.ni
+    .org.np .org.nr .org.nz .org.om .org.pa .org.pe .org.ph .org.pk .org.pl .org.pr
+    .org.ps .org.pt .org.py .org.qa .org.ro .org.rs .org.ru .org.sa .org.sb .org.sc
+    .org.sd .org.se .org.sg .org.sh .org.sl .org.sn .org.st .org.sv .org.sy .org.sz
+    .org.tj .org.tn .org.tr .org.tt .org.tw .org.ua .org.ug .org.uk .org.uy .org.ve
+    .org.vi .org.vn .org.ye .org.yu .org.za .org.zm .orgn.uk .oryol.ru .other.nf .p.se
+    .parliament.cy .parliament.nz .parliament.uk .parliament.uk .parti.se .pb.ao .pe.ca
+    .pe.kr .penza.ru .per.kh .per.nf .per.sg .perm.ru .perso.sn .perso.tn .pharmaciens.km
+    .pix.za .pl.ua .plc.ly .plc.uk .plc.ye .plo.ps .pol.dz .pol.tr .police.uk .poltava.ua
+    .poznan.pl .pp.ru .pp.se .pp.ua .ppg.br .prd.fr .prd.mg .press.cy .press.ma .press.se
+    .presse.fr .presse.km .presse.ml .principe.st .priv.me .pro.ae .pro.br .pro.cy
+    .pro.ec .pro.fj .pro.mk .pro.mv .pro.om .pro.pr .pro.tt .pro.vn .prof.pr .psc.br
+    .psi.br .pskov.ru .ptz.ru .pub.sa .publ.pt .pwr.pl .qc.ca .qh.cn .qsl.br .r.se
+    .radom.pl .re.kr .rec.br .rec.nf .rec.ro .red.sv .res.in .rnd.ru .rnrt.tn .rns.tn
+    .rnu.tn .rochest.er .rovno.ua .rs.ba .rv.ua .ryazan.ru .s.se .sa.cr .sakhalin.ru
+    .samara.ru .saotome.st .saratov.ru .sc.cn .sc.ke .sc.kr .sc.ug .sch.ae .sch.id
+    .sch.ir .sch.jo .sch.lk .sch.ly .sch.my .sch.ng .sch.om .sch.sa .sch.uk .sch.zm
+    .school.nz .school.za .sci.eg .scot.uk .sd.cn .sebastopol.ua .sec.ps .seoul.kr
+    .sh.cn .simbirsk.ru .sk.ca .sld.do .sld.pa .sld.pe .slg.br .slupsk.pl .smolensk.ru
+    .sn.cn .soc.lk .soc.uk .spb.ru .srv.br .stavropol.ru .store.bb .store.nf .store.ro
+    .store.st .stv.ru .sumy.ua .surgut.ru .sx.cn .szczecin.pl .t.se .tambov.ru
+    .tatarstan.ru .te.ua .tel.ki .tel.tr .tel.tt .ternopil.ua .test.tj .tj.cn .tm.cy
+    .tm.fr .tm.km .tm.mc .tm.mg .tm.ro .tm.se .tm.za .tmp.br .tom.ru .tomsk.ru .torun.pl
+    .tourism.tn .travel.tt .trd.br .tsaritsyn.ru .tsk.ru .tsk.tr .tula.ru .tur.ar .tur.br
+    .tuva.ru .tv.bb .tv.bo .tv.br .tv.sd .tv.tr .tver.ru .tw.cn .tyumen.ru .u.se .udm.ru
+    .udmurtia.ru .ulan-ude.ru .ulsan.kr .unbi.ba .univ.sn .unmo.ba .unsa.ba .untz.ba
+    .unze.ba .uzhgorod.ua .vet.br .veterinaire.km .vinnica.ua .vladikavkaz.ru .vladimir.ru
+    .vladivostok.ru .vlog.br .vn.ua .volgograd.ru .vologda.ru .voronezh.ru .vrn.ru
+    .vyatka.ru .w.er .w.se .war.net.id .warszawa.pl .waw.pl .wcape.school.za .web.do
+    .web.id .web.lk .web.nf .web.pk .web.tj .web.tr .web.ve .web.za .wiki.br .wroc.pl
+    .wroclaw.pl .www.ro .x.se .xj.cn .xz.cn .y.se .yakutia.ru .yamal.ru .yekaterinburg.ru
+    .yk.ca .yn.cn .yuzhno-sakhalinsk.ru .z.se .zaporizhzhe.ua .zgora.pl .zhitomir.ua
+    .zj.cn .zlg.br .zp.ua .zt.ua
     """
     try:
         import publicsuffix
         top = publicsuffix.PublicSuffixList().get_public_suffix(domain)
     except ImportError:
-        if domain.count('.') <= 2:
-            top = '.'.join(domain.rsplit('.', 2)[-2:])
-        elif domain.endswith(tuple(_split.__doc__.split())):
+        suffixs = tuple(_split.__doc__.split())
+        if domain.endswith(suffixs):
+            suffix = sorted((x for x in suffixs if domain.endswith(x)), key=len, reverse=True)[0]
+            top = domain[:-len(suffix)].rsplit('.')[-1] + suffix
+            logging.info('python-publicsuffix not found, ddns guess %r as top-level domain', top)
+        elif domain.count('.') <= 2:
             top = '.'.join(domain.rsplit('.', 2)[-2:])
             logging.warning('python-publicsuffix not found, ddns guess %r as top-level domain', top)
         else:
