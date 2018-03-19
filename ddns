@@ -19,8 +19,8 @@ Examples:
     ddns.py qcloud --secret-id SECRET_ID --secret-key SECRET_KEY --domain DOMAIN
 """
 
-PY3 = '' is u''
-if not PY3:
+PY2 = '' is not u''
+if PY2:
     reload(__import__('sys')).setdefaultencoding('utf-8')
 
 import base64
@@ -41,16 +41,16 @@ import time
 import uuid
 import xml.etree.ElementTree
 
-if PY3:
-    from itertools import zip_longest
-    from queue import Queue
-    from urllib.parse import urlencode, quote_plus
-    from urllib.request import urlopen, Request, HTTPError
-else:
+if PY2:
     from itertools import izip_longest as zip_longest
     from Queue import Queue
     from urllib import urlencode, quote_plus
     from urllib2 import urlopen, Request, HTTPError
+else:
+    from itertools import zip_longest
+    from queue import Queue
+    from urllib.parse import urlencode, quote_plus
+    from urllib.request import urlopen, Request, HTTPError
 
 try:
     import publicsuffix
@@ -370,7 +370,7 @@ def _split(domain):
 def _main():
     applet = os.path.basename(sys.argv[0])
     funcs = [v for v in globals().values() if type(v) is type(_main) and v.__module__ == '__main__' and not v.__name__.startswith('_')]
-    for attr in ['doc', 'defaults', 'code'] if not PY3 else []:
+    for attr in ['doc', 'defaults', 'code'] if PY2 else []:
         for func in funcs:
             setattr(func, '__'+attr+'__', getattr(func, 'func_'+attr))
     funcs = sorted(funcs, key=lambda x:x.__name__)
