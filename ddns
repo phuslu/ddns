@@ -336,9 +336,9 @@ def _split(domain):
             root = '.'.join(domain.rsplit('.', 2)[-2:])
         elif domain.endswith(tuple(_split.__doc__.split())):
             root = '.'.join(domain.rsplit('.', 2)[-2:])
-            logging.warning('python-publicsuffix is not installed, ddns guessed %r is the top-level domain', root)
+            logging.warning('python-publicsuffix not found, ddns guess %r as top-level domain', root)
         else:
-            logging.error('cannot get top-level domain of %r, please `pip install publicsuffix\'', domain)
+            logging.error('cannot guess the top-level domain of %r, please `pip install publicsuffix\'', domain)
             sys.exit(-1)
     record = domain[:-len(root)].strip('.') or '@'
     return record, root
