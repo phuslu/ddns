@@ -14,11 +14,10 @@ Examples:
         ddns he --key KEY --domain DOMAIN
         ddns linode --key KEY --domain DOMAIN
         ddns namecheap --password PASSWORD --domain DOMAIN
+        ddns namesilo --password PASSWORD --domain DOMAIN
         ddns ns1 --key KEY --domain DOMAIN
         ddns qcloud --secret-id SECRET_ID --secret-key SECRET_KEY --domain DOMAIN
 ```
 ### Roadmap
-- [ ] namesilo
-- [ ] cloudns
-- [ ] route53
-- [ ] and [more...](https://github.com/Neilpang/acme.sh/tree/master/dnsapi)
+- [ ] add [more...](https://github.com/Neilpang/acme.sh/tree/master/dnsapi) providers
+- [ ] add post hooks
