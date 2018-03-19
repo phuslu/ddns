@@ -328,15 +328,18 @@ def _split(domain):
     .solutions .space .store .stream .studio .systems .team .tech .technology .today
     .tools .travel .video .wang .website .wiki .work .works .yokohama
     """
-    if domain.count('.') <= 2 or domain.endswith(tuple(_split.__doc__.split())):
-        root = '.'.join(domain.rsplit('.', 2)[-2:])
-    else:
-        try:
-            import publicsuffix
-        except ImportError:
+    try:
+        import publicsuffix
+        root = publicsuffix.PublicSuffixList().get_public_suffix(domain)
+    except ImportError:
+        if domain.count('.') <= 2:
+            root = '.'.join(domain.rsplit('.', 2)[-2:])
+        elif domain.endswith(tuple(_split.__doc__.split())):
+            root = '.'.join(domain.rsplit('.', 2)[-2:])
+            logging.warning('python-publicsuffix is not installed, ddns guessed %r is the top-level domain', root)
+        else:
             logging.error('cannot get top-level domain of %r, please `pip install publicsuffix\'', domain)
             sys.exit(-1)
-        root = publicsuffix.PublicSuffixList().get_public_suffix(domain)
     record = domain[:-len(root)].strip('.') or '@'
     return record, root
 
