@@ -375,11 +375,12 @@ def _split(domain):
     .tn .to .tp .tr .tt .tv .tw .tz .ua .ug .uk .um .us .uy .uz .va .vc .ve .vg .vi
     .vn .vu .wf .ws .ye .yt .yu .za .zm .zw
 
-    .biz .cat .com .edu .gov .mil .net .one .org .pro .vip .xyz
+    .biz .cat .com .edu .fun .gov .ink .kim .ltd .mil .net .one .org .pro .pub .red
+    .ren .top .vip .xin .xyz
 
-    .aero .arpa .asia .club .coop .fishing .guru .info .jobs .live .mobi .museum
-    .name .online .photography .place .solutions .space .tech .technology .today
-    .travel .wang
+    .aero .arpa .asia .club .coop .design .fishing .group .guru .info .jobs .link
+    .live .mobi .museum .name .online .photography .place .shop .site .solutions
+    .space .store .tech .technology .today .travel .wang .wiki .work
     """
     if domain.count('.') <= 2 or domain.endswith(tuple(_split.__doc__.split())):
         root = '.'.join(domain.rsplit('.', 2)[-2:])
