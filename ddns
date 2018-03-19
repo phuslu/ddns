@@ -53,11 +53,6 @@ else:
     from urllib.parse import urlencode, quote_plus
     from urllib.request import urlopen, Request, HTTPError
 
-try:
-    import publicsuffix
-except ImportError:
-    publicsuffix = None
-
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 
@@ -335,11 +330,13 @@ def _split(domain):
     """
     if domain.count('.') <= 2 or domain.endswith(tuple(_split.__doc__.split())):
         root = '.'.join(domain.rsplit('.', 2)[-2:])
-    elif publicsuffix:
-        root = publicsuffix.PublicSuffixList().get_public_suffix(domain)
     else:
-        logging.error('cannot get top-level domain of %r, please `pip install publicsuffix\'', domain)
-        sys.exit(-1)
+        try:
+            import publicsuffix
+        except ImportError:
+            logging.error('cannot get top-level domain of %r, please `pip install publicsuffix\'', domain)
+            sys.exit(-1)
+        root = publicsuffix.PublicSuffixList().get_public_suffix(domain)
     record = domain[:-len(root)].strip('.') or '@'
     return record, root
 
