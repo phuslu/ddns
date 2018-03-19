@@ -245,7 +245,7 @@ def namecheap(password, domain):
     logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
 
 
-def namesilo(password, domain):
+def namesilo(key, domain):
     ip = _getip(domain)
     record_name, root_domain = _split(domain)
     url = 'https://www.namesilo.com/api/dnsListRecords'
