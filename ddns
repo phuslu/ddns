@@ -484,7 +484,7 @@ def _split(domain):
     except ImportError:
         suffixs = tuple(_split.__doc__.split())
         if domain.endswith(suffixs):
-            suffix = sorted((x for x in suffixs if domain.endswith(x)), key=len, reverse=True)[0]
+            suffix = max((x for x in suffixs if domain.endswith(x)), key=len)
             top = domain[:-len(suffix)].rsplit('.')[-1] + suffix
             logging.info('python-publicsuffix not found, ddns guess %r as top-level domain', top)
         elif domain.count('.') <= 2:
