@@ -123,15 +123,15 @@ def dnsimple(account_id, key, domain):
     headers = {'Authorization': 'Bearer '+key, 'Accept': 'application/json'}
     _, _, info = _request('GET', 'https://api.dnsimple.com/v2/whoami', headers=headers, return_json=True)
     account_id = info['data']['id']
-    logging.info('digitalocean domain=%r to ip=%r account_id: %s', domain, ip, account_id)
+    logging.info('dnsimple domain=%r to ip=%r account_id: %s', domain, ip, account_id)
     url = 'https://api.dnsimple.com/v2/%s/zones/%s/records' % (account_id, top_domain)
     _, _, info = _request('GET', url, headers=headers, return_json=True)
     record_id = next(x['id'] for x in info['data'] if x['name'] == record_name and x['type'] == 'A')
-    logging.info('digitalocean domain=%r to ip=%r record_id: %s', domain, ip, record_id)
+    logging.info('dnsimple domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     url = 'https://api.dnsimple.com/v2/%s/zones/%s/records/%s' % (account_id, top_domain, record_id)
     info = {'type': 'A', 'content': ip, 'ttl': '600', 'regions': ['global']}
     _, _, info = _request('PATCH', url, headers=headers, json=info, return_json=True)
-    logging.info('digitalocean domain=%r to ip=%r result: %s', domain, ip, info)
+    logging.info('dnsimple domain=%r to ip=%r result: %s', domain, ip, info)
 
 
 def dnspod(email, password, domain):
@@ -176,7 +176,7 @@ def he(key, domain):
     ip = _getip(domain)
     params = {'hostname': domain, 'password': key, 'myip': ip}
     _, _, content = _request('GET', 'https://dyn.dns.he.net/nic/update', params=params)
-    logging.info('dnspod domain=%r to ip=%r result: %s', domain, ip, content)
+    logging.info('he domain=%r to ip=%r result: %s', domain, ip, content)
 
 
 def linode(key, domain):
@@ -200,7 +200,7 @@ def ns1(key, domain):
     url = 'https://api.nsone.net/v1/zones/%s/%s/A' % (top_domain, domain)
     info = {'answers':[{'answer':[ip]}], 'ttl': 600}
     _, _, info = _request('POST', url, headers=headers, json=info, return_json=True)
-    logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
+    logging.info('ns1 domain=%r to ip=%r result: %s', domain, ip, info)
 
 
 def namecheap(password, domain):
@@ -208,7 +208,7 @@ def namecheap(password, domain):
     url = 'https://dynamicdns.park-your-domain.com/update'
     params = {'host': record_name, 'domain': top_domain, 'password': password}
     _, _, info = _request('GET', url, params=params)
-    logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
+    logging.info('namecheap domain=%r to ip=%r result: %s', domain, ip, info)
 
 
 def namesilo(key, domain):
@@ -235,11 +235,11 @@ def qcloud(secret_id, secret_key, domain):
     params['Signature'] = sign(params)
     _, _, info = _request('GET', api_url, params=params, return_json=True)
     record_id = next(x['id'] for x in info['data']['records'] if x['name'] == record_name and x['line'] == u'默认')
-    logging.info('aliyun domain=%r to ip=%r record_id: %s', domain, ip, record_id)
+    logging.info('qcloud domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     params = dict(common_params.items(), Action='RecordModify', domain=top_domain, subDomain=record_name, recordId=record_id, recordType='A', recordLine=u'默认', value=ip, ttl='600')
     params['Signature'] = sign(params)
     _, _, info = _request('GET', api_url, params=params, return_json=True)
-    logging.info('aliyun domain=%r to ip=%r info: %s', domain, ip, info)
+    logging.info('qcloud domain=%r to ip=%r info: %s', domain, ip, info)
 
 
 def _getip(domain):
@@ -538,4 +538,3 @@ def _main():
 
 if __name__ == '__main__':
     _main()
-
