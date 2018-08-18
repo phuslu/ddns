@@ -14,6 +14,7 @@ Examples:
     ddns godaddy --key KEY --secret SECRET --domain DOMAIN
     ddns he --key KEY --domain DOMAIN
     ddns linode --key KEY --domain DOMAIN
+    ddns linodev3 --key KEY --domain DOMAIN
     ddns namecheap --password PASSWORD --domain DOMAIN
     ddns namesilo --key KEY --domain DOMAIN
     ddns ns1 --key KEY --domain DOMAIN
@@ -190,6 +191,19 @@ def linode(key, domain):
     record_id = next(x['id'] for x in info['data'] if x['name'] == domain)
     logging.info('linode domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     _, _, info = _request('PUT', 'https://api.linode.com/v4/domains/%s/records/%s' % (domain_id, record_id), headers=headers, json={'name': domain, 'target': ip})
+    logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
+
+
+def linodev3(key, domain):
+    ip = _getip(domain)
+    record_name, top_domain = _split(domain)
+    _, _, info = _request('GET', 'https://api.linode.com/?api_key={}&api_action=domain.list'.format(key), return_json=True)
+    domain_id = next(x['DOMAINID'] for x in info['DATA'] if x['DOMAIN'] == top_domain)
+    logging.info('linode domain=%r to ip=%r domain_id: %s', domain, ip, domain_id)
+    _, _, info = _request('GET', 'https://api.linode.com/?api_key={}&api_action=domain.resource.list&domainid={}'.format(key, domain_id), return_json=True)
+    record_id = next(x['RESOURCEID'] for x in info['DATA'] if x['NAME'] == record_name)
+    logging.info('linode domain=%r to ip=%r record_id: %s', domain, ip, record_id)
+    _, _, info = _request('PUT', 'https://api.linode.com/?api_key={}&api_action=domain.resource.update&domainid={}&resourceid={}&target={}'.format(key, domain_id, record_id, ip), return_json=True)
     logging.info('linode domain=%r to ip=%r result: %s', domain, ip, info)
 
 
