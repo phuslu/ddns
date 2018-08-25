@@ -234,7 +234,7 @@ def namesilo(key, domain):
     record_id = next(x.find('record_id').text for x in tree.find('reply').iter('resource_record') if x.find('host').text == domain and x.find('type').text == 'A')
     logging.info('namesilo domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     url = 'https://www.namesilo.com/api/dnsUpdateRecord'
-    params = {'version': '1', 'type': 'xml', 'key': key, 'domain': top_domain, 'rrid': record_id, 'rrvalue': ip, 'rrhost': record_name, 'rrttl': '600'}
+    params = {'version': '1', 'type': 'xml', 'key': key, 'domain': top_domain, 'rrid': record_id, 'rrvalue': ip, 'rrhost': record_name, 'rrttl': '3600'}
     _, _, info = _request('GET', url, params=params)
     logging.info('namesilo domain=%r to ip=%r result: %s', domain, ip, info)
 
