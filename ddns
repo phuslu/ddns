@@ -264,8 +264,11 @@ def _getip(domain):
     ]
     result = Queue()
     def _fetch(url):
-        result.put(urlopen(Request(url, headers={'user-agent':'curl/7.53'}), timeout=5))
-        logging.info('getip() from %r', url)
+        try:
+            result.put(urlopen(Request(url, headers={'user-agent':'curl/7.53'}), timeout=5))
+            logging.info('getip() from %r', url)
+        except Exception as e:
+            logging.exception('getip() from %r error: %s', url, e)
     for url in urls:
         t = threading.Thread(target=_fetch, args=(url,))
         t.setDaemon(True)
