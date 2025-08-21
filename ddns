@@ -1,5 +1,8 @@
-#!/usr/bin/env python
+#!/bin/sh
 # coding:utf-8
+""":"
+exec python3 "$0" "$@" || exec python2 "$0" "$@"
+":"""
 """
 Usage: ddns <provider> [arguments]
 
@@ -21,8 +24,8 @@ Examples:
     ddns qcloud --secret-id SECRET_ID --secret-key SECRET_KEY --domain DOMAIN
 """
 
-PY2 = '' is not u''
-if PY2:
+PY3 = type('') == type(u'')
+if not PY3:
     reload(__import__('sys')).setdefaultencoding('utf-8')
 
 import base64
@@ -43,16 +46,16 @@ import time
 import uuid
 import xml.etree.ElementTree
 
-if PY2:
-    from itertools import izip_longest as zip_longest
-    from Queue import Queue
-    from urllib import urlencode, quote_plus
-    from urllib2 import urlopen, Request, HTTPError
-else:
+if PY3:
     from itertools import zip_longest
     from queue import Queue
     from urllib.parse import urlencode, quote_plus
     from urllib.request import urlopen, Request, HTTPError
+else:
+    from itertools import izip_longest as zip_longest
+    from Queue import Queue
+    from urllib import urlencode, quote_plus
+    from urllib2 import urlopen, Request, HTTPError
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
@@ -258,7 +261,6 @@ def qcloud(secret_id, secret_key, domain):
 
 def _getip(domain):
     urls = [
-        'http://ip.3322.org',
         'http://whatismyip.akamai.com/',
         'http://checkip.amazonaws.com/',
     ]
@@ -271,7 +273,10 @@ def _getip(domain):
             logging.exception('getip() from %r error: %s', url, e)
     for url in urls:
         t = threading.Thread(target=_fetch, args=(url,))
-        t.setDaemon(True)
+        if PY3:
+            t.daemon = True
+        else:
+            t.setDaemon(True)
         t.start()
     text = result.get().read().decode()
     ip = re.search(r'(\d{1,3}.){3}\d{1,3}', text).group()
@@ -517,9 +522,11 @@ def _split(domain):
 def _main():
     applet = os.path.basename(sys.argv[0])
     funcs = [v for v in globals().values() if type(v) is type(_main) and v.__module__ == '__main__' and not v.__name__.startswith('_')]
-    for attr in ['doc', 'defaults', 'code'] if PY2 else []:
+    if not PY3:
         for func in funcs:
-            setattr(func, '__'+attr+'__', getattr(func, 'func_'+attr))
+            setattr(func, '__code__', getattr(func, 'func_'+attr))
+            setattr(func, '__doc__', getattr(func, 'func_'+attr))
+            setattr(func, '__defaults__', getattr(func, 'func_'+attr))
     funcs = sorted(funcs, key=lambda x:x.__name__)
     params = collections.OrderedDict((f.__name__, list(zip_longest(f.__code__.co_varnames[:f.__code__.co_argcount][::-1], (f.__defaults__ or [])[::-1]))[::-1]) for f in funcs)
     def usage(applet):
