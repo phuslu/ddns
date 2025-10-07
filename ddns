@@ -72,7 +72,7 @@ def aliyun(key, secret, domain):
     _, _, info = _request('GET', api_url, params=params, return_json=True)
     record_id = next(x['RecordId'] for x in info['DomainRecords']['Record'] if x['RR'] == record_name)
     logging.info('aliyun domain=%r to ip=%r record_id: %s', domain, ip, record_id)
-    params = dict(common_params.items(), Action='UpdateDomainRecord', RecordId=record_id, RR=record_name, Type='A', Value=ip, TTL='600')
+    params = dict(common_params.items(), Action='UpdateDomainRecord', RecordId=record_id, RR=record_name, Type=('AAAA' if ':' in ip else 'A'), Value=ip, TTL='600')
     params['Signature'] = sign(params)
     _, _, info = _request('GET', api_url, params=params, return_json=True)
     logging.info('aliyun domain=%r to ip=%r info: %s', domain, ip, info)
@@ -88,12 +88,12 @@ def cloudflare(email, key, domain):
     logging.info('cloudflare domain=%r to ip=%r zone_id: %s', domain, ip, zone_id)
     api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records?name=%s' % (zone_id, domain)
     _, _, info = _request('GET', api_url, headers=headers, return_json=True)
-    record_id = info['result'][0]['id']
+    record_id = next(result['id'] for result in info['result'] if result['type'] == ('AAAA' if ':' in ip else 'A'))
     logging.info('cloudflare domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     api_url = 'https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s' % (zone_id, record_id)
-    info = {'id': zone_id, 'type': 'A', 'ttl': 300, 'proxied': False, 'name': domain, 'content': ip}
+    info = {'id': zone_id, 'type': ('AAAA' if ':' in ip else 'A'), 'ttl': 60, 'proxied': False, 'name': domain, 'content': ip}
     _, _, info = _request('PUT', api_url, headers=headers, json=info, return_json=True)
-    logging.info('cloudflare domain=%r to ip=%r result: %s', domain, ip, info['result'])
+    logging.info('cloudflare domain=%r to ip=%r result: %s', domain, ip, info)
 
 
 def cloudxns(key, secret, domain):
@@ -113,10 +113,10 @@ def digitalocean(key, domain):
     headers = {'Authorization': 'Bearer '+key}
     url = 'https://api.digitalocean.com/v2/domains/%s/records' % top_domain
     _, _, info = _request('GET', url, headers=headers, return_json=True)
-    record_id = next(x['id'] for x in info['domain_records'] if x['name'] == record_name and x['type'] == 'A')
+    record_id = next(x['id'] for x in info['domain_records'] if x['name'] == record_name and x['type'] == ('AAAA' if ':' in ip else 'A'))
     logging.info('digitalocean domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     url = 'https://api.digitalocean.com/v2/domains/%s/records/%s' % (top_domain, record_id)
-    info = {'type': 'A', 'name': record_name, 'data': ip, 'ttl': '600'}
+    info = {'type': 'AAAA' if ':' in ip else 'A', 'name': record_name, 'data': ip, 'ttl': '600'}
     _, _, info = _request('PUT', url, headers=headers, json=info, return_json=True)
     logging.info('digitalocean domain=%r to ip=%r result: %s', domain, ip, info)
 
@@ -130,10 +130,10 @@ def dnsimple(account_id, key, domain):
     logging.info('dnsimple domain=%r to ip=%r account_id: %s', domain, ip, account_id)
     url = 'https://api.dnsimple.com/v2/%s/zones/%s/records' % (account_id, top_domain)
     _, _, info = _request('GET', url, headers=headers, return_json=True)
-    record_id = next(x['id'] for x in info['data'] if x['name'] == record_name and x['type'] == 'A')
+    record_id = next(x['id'] for x in info['data'] if x['name'] == record_name and x['type'] == ('AAAA' if ':' in ip else 'A'))
     logging.info('dnsimple domain=%r to ip=%r record_id: %s', domain, ip, record_id)
     url = 'https://api.dnsimple.com/v2/%s/zones/%s/records/%s' % (account_id, top_domain, record_id)
-    info = {'type': 'A', 'content': ip, 'ttl': '600', 'regions': ['global']}
+    info = {'type': 'AAAA' if ':' in ip else 'A', 'content': ip, 'ttl': '600', 'regions': ['global']}
     _, _, info = _request('PATCH', url, headers=headers, json=info, return_json=True)
     logging.info('dnsimple domain=%r to ip=%r result: %s', domain, ip, info)
 
@@ -147,9 +147,9 @@ def dnspod(email, password, domain):
     logging.info('dnspod domain=%r to ip=%r domain_id: %s', domain, ip, domain_id)
     params['domain_id'] = domain_id
     _, _, info = _request('POST', 'https://dnsapi.cn/Record.List', params=params, return_json=True)
-    record_id = next(x['id'] for x in info['records'] if x['name'] == record_name and x['type'] == 'A')
+    record_id = next(x['id'] for x in info['records'] if x['name'] == record_name and x['type'] == ('AAAA' if ':' in ip else 'A'))
     logging.info('dnspod domain=%r to ip=%r record_id: %s', domain, ip, record_id)
-    params.update({'record_id':record_id, 'record_type':'A', 'record_line':u'默认', 'value':ip, 'mx':5, 'sub_domain':record_name})
+    params.update({'record_id':record_id, 'record_type':'AAAA' if ':' in ip else 'A', 'record_line':u'默认', 'value':ip, 'mx':5, 'sub_domain':record_name})
     _, _, info = _request('POST', 'https://dnsapi.cn/Record.Modify', params=params, return_json=True)
     logging.info('dnspod domain=%r to ip=%r info: %s', domain, ip, info)
 
@@ -171,7 +171,7 @@ def godaddy(key, secret, domain):
     ip = _getip(domain)
     record_name, top_domain = _split(domain)
     headers = {'Authorization': 'sso-key %s:%s' % (key, secret), 'Content-type': 'application/json'}
-    api_url = 'https://api.godaddy.com/v1/domains/%s/records/A/%s' % (top_domain, record_name)
+    api_url = 'https://api.godaddy.com/v1/domains/%s/records/%s/%s' % (top_domain, 'AAAA' if ':' in ip else 'A', record_name)
     _, _, info = _request('PUT', api_url, headers=headers, json={'data': ip, 'ttl': '600'}, return_json=True)
     logging.info('godaddy domain=%r to ip=%r info: %s', domain, ip, info)
 
@@ -260,10 +260,7 @@ def qcloud(secret_id, secret_key, domain):
 
 
 def _getip(domain):
-    urls = [
-        'http://whatismyip.akamai.com/',
-        'http://checkip.amazonaws.com/',
-    ]
+    urls = os.getenv('CHECK_IP_URL', 'http://whatismyip.akamai.com/,http://checkip.amazonaws.com/').split(',')
     result = Queue()
     def _fetch(url):
         try:
@@ -279,8 +276,9 @@ def _getip(domain):
             t.setDaemon(True)
         t.start()
     text = result.get().read().decode()
-    ip = re.search(r'(\d{1,3}\.){3}\d{1,3}', text).group()
-    if ip == socket.gethostbyname(domain):
+    ip = (re.search(r'(\d{1,3}\.){3}\d{1,3}', text) or re.search(r'\b[0-9a-f:]+\b', text)).group()
+    addrinfo = socket.getaddrinfo(domain, 443, family=(socket.AF_INET6 if ':' in ip else socket.AF_INET), type=socket.SOCK_STREAM)
+    if ip in [x[-1][0] for x in addrinfo]:
         logging.info('remote ip and local ip is same to %s, exit.', ip)
         sys.exit(0)
     return ip
